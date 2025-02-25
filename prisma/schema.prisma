@@ -7,45 +7,102 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Role {
+  CENTER
+  ADMIN
+}
+
 model User {
   id       Int     @id @default(autoincrement())
   email    String  @unique
   name     String?
   role     Role    @default(CENTER)
   password String
-
-  Center Center?
-}
-
-enum Role {
-  CENTER
-  ADMIN
-  STUDENT
+  Center   Center?
 }
 
 model Center {
   id        Int          @id @default(autoincrement())
+  name      String
   locationX Float
   locationY Float
   Student   Enrollment[]
-  name      String
-  admin     User         @relation(fields: [adminid], references: [id])
+  admin     User         @relation(fields: [adminid], references: [id], onDelete: Cascade)
   adminid   Int          @unique
 }
 
 model Enrollment {
-  id               Int      @id @default(autoincrement())
-  no               String
-  name             String
-  dob              DateTime
-  father           String
-  mother           String
-  address          String
-  mobileNo         String
-  wpNo             String
-  centerName       Center   @relation(fields: [centerNameid], references: [id])
-  centerNameid     Int
-  courseName       String
+  id              Int    @id @default(autoincrement())
+  Enrollmentno    String
+  IdCardNo        String
+  idCardLink      String
+  admitLink       String
+  certificateLink String
+  marksheetLink   String
+
+  name     String
+  dob      DateTime
+  father   String
+  mother   String
+  address  String
+  mobileNo String
+  wpNo     String
+
   eduqualification String
-  activated        Boolean
+  activated        Boolean @default(false)
+
+  examformFillup ExamForm?
+  marks          Marks?
+  amount         Amount?
+  course         Course?
+
+  centerName   Center @relation(fields: [centerNameid], references: [id])
+  centerNameid Int
+
+  @@index([Enrollmentno])
+}
+
+model Course {
+  id       Int    @id @default(autoincrement())
+  Name     String
+  price    Int
+  Duration String
+
+  enrollment   Enrollment @relation(fields: [EnrollmentId], references: [id])
+  EnrollmentId Int        @unique
+}
+
+model Amount {
+  id                   Int    @id @default(autoincrement())
+  EnrollmentNo         String
+  TotalPaid            Int
+  amountRemain         Int
+  Approval             Int
+  lastPaymentRecieptno String
+
+  enrollment   Enrollment @relation(fields: [enrollmentId], references: [id])
+  enrollmentId Int        @unique
+}
+
+model ExamForm {
+  id Int @id @default(autoincrement())
+
+  enrollment   Enrollment @relation(fields: [EnrollmentId], references: [id])
+  EnrollmentId Int        @unique
+  verified     Boolean    @default(false)
+}
+
+model Marks {
+  id           Int        @id @default(autoincrement())
+  totalmarks   Int
+  remarks      Remark
+  enrollment   Enrollment @relation(fields: [EnrollmentId], references: [id])
+  EnrollmentId Int        @unique
+
+  verified Boolean @default(false)
+}
+
+enum Remark {
+  PASS
+  FAIL
 }

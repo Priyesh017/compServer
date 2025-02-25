@@ -2,7 +2,14 @@ import Bcrypt from "bcryptjs";
 import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { prisma } from "../client";
-import { accessTokenCookieOptions, Cookiehelper } from "../helper";
+import {
+  accessTokenCookieOptions,
+  Cookiehelper,
+  filladmit,
+  fillCertificate,
+  fillId,
+  fillMarksheet,
+} from "../helper";
 
 export async function loginFunc(req: Request, res: Response) {
   try {
@@ -107,7 +114,7 @@ export async function enrollCheck(req: Request, res: Response) {
 
   const val = prisma.enrollment.findFirst({
     where: {
-      no,
+      Enrollmentno: no,
     },
   });
 
@@ -158,12 +165,18 @@ export async function deActivateEnrollment(req: Request, res: Response) {
 }
 
 export async function createCenter(req: Request, res: Response) {
-  const { locationX, locationY } = req.body;
+  const { locationX, locationY, name, adminId } = req.body;
 
   const data = prisma.center.create({
     data: {
       locationX,
       locationY,
+      name,
+      admin: {
+        connect: {
+          id: adminId, // assuming adminId is passed in the request body
+        },
+      },
     },
   });
 
@@ -188,3 +201,36 @@ export async function AllEnrollments(req: Request, res: Response) {
     res.status(500).json({ error: "Failed to fetch enrollments" });
   }
 }
+
+export async function generateCertificate(req: Request, res: Response) {
+  // only center
+
+  fillCertificate().catch((err) => console.error(err));
+  res.json({ data: "kuch hua hai" });
+}
+
+export async function generateadmit(req: Request, res: Response) {
+  filladmit().catch((err) => console.error(err));
+  res.json({ data: "kuch hua haiiii" });
+}
+
+export async function generateId(req: Request, res: Response) {
+  fillId().catch((err) => console.error(err));
+  res.json({ data: "kuch hua haiiii<3" });
+}
+
+export async function generateMarksheet(req: Request, res: Response) {
+  fillMarksheet().catch((err) => console.error(err));
+  res.json({ data: "kuch hua haiiii" });
+}
+
+export async function exmformfillup(req: Request, res: Response) {}
+
+//branch admin enroll notification goes to central admin
+// branch exam form fillup
+
+// branch admin en
+
+// enrollment activated on thakle id card download korte parbe
+// examform fillup verified thakle admit download kora jabe
+// marksheet e pass thakle certificate download kora jabe and always result download hobe

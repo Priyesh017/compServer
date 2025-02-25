@@ -10,6 +10,10 @@ import {
   ActivateEnrollment,
   createEnrollment,
   enrollCheck,
+  generateCertificate,
+  generateadmit,
+  generateMarksheet,
+  generateId,
 } from "../controller/mainController";
 
 const router = Router();
@@ -25,5 +29,10 @@ router.route("/deActivateEnrollment").post(deActivateEnrollment);
 router.route("/ActivateEnrollment").post(ActivateEnrollment);
 router.route("/createEnrollment").post(createEnrollment);
 router.route("/enrollCheck").post(enrollCheck);
+
+router.route("/generateCertificate").post(generateCertificate);
+router.route("/generateadmit").post(generateadmit);
+router.route("/generateMarksheet").post(generateMarksheet);
+router.route("/generateId").post(generateId);
 
 export default router;
