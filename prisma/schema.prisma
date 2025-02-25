@@ -35,10 +35,10 @@ model Enrollment {
   id              Int    @id @default(autoincrement())
   Enrollmentno    String
   IdCardNo        String
-  idCardLink      String
-  admitLink       String
-  certificateLink String
-  marksheetLink   String
+  idCardLink      String @default("")
+  admitLink       String @default("")
+  certificateLink String @default("")
+  marksheetLink   String @default("")
 
   name     String
   dob      DateTime
@@ -54,7 +54,9 @@ model Enrollment {
   examformFillup ExamForm?
   marks          Marks?
   amount         Amount?
-  course         Course?
+
+  course   Course @relation(fields: [courseId], references: [id])
+  courseId Int
 
   centerName   Center @relation(fields: [centerNameid], references: [id])
   centerNameid Int
@@ -66,10 +68,9 @@ model Course {
   id       Int    @id @default(autoincrement())
   Name     String
   price    Int
-  Duration String
+  Duration Int
 
-  enrollment   Enrollment @relation(fields: [EnrollmentId], references: [id])
-  EnrollmentId Int        @unique
+  Enrollment Enrollment[]
 }
 
 model Amount {

@@ -112,7 +112,7 @@ export async function logoutfunc(req: Request, res: Response) {
 export async function enrollCheck(req: Request, res: Response) {
   const no = req.query.id as string;
 
-  const val = prisma.enrollment.findFirst({
+  const val = await prisma.enrollment.findFirst({
     where: {
       Enrollmentno: no,
     },
@@ -122,23 +122,57 @@ export async function enrollCheck(req: Request, res: Response) {
 }
 
 export async function createEnrollment(req: Request, res: Response) {
-  //check if its from any center
+  //take course id from client
   const {
     name,
     dob,
-    father,
-    mother,
-    address,
-    mobNo,
-    wpno,
-    coursename,
-    qualification,
+    fatherName: father,
+    motherName: mother,
+    Address: address,
+    mobile: mobileNo,
+    wapp: wpNo,
+    enrollmentNo: Enrollmentno,
+    eduqualification,
+    idno: IdCardNo,
   } = req.body;
+
+  const dobUpdated = new Date(dob);
+
+  try {
+    const data = await prisma.enrollment.create({
+      data: {
+        father,
+        mobileNo,
+        mother,
+        address,
+        dob: dobUpdated,
+        name,
+        wpNo,
+        course: {
+          connect: {
+            id: 2,
+          },
+        },
+        Enrollmentno,
+        eduqualification,
+        IdCardNo,
+
+        centerName: {
+          connect: {
+            id: 1,
+          },
+        },
+      },
+    });
+    res.json({ success: "true", data });
+  } catch (error) {
+    res.json({ success: "false", error });
+  }
 }
 
 export async function ActivateEnrollment(req: Request, res: Response) {
   const { id } = req.body;
-  const val = prisma.enrollment.update({
+  const val = await prisma.enrollment.update({
     where: {
       id,
     },
@@ -152,7 +186,7 @@ export async function ActivateEnrollment(req: Request, res: Response) {
 
 export async function deActivateEnrollment(req: Request, res: Response) {
   const { id } = req.body;
-  const val = prisma.enrollment.update({
+  const val = await prisma.enrollment.update({
     where: {
       id,
     },
@@ -165,22 +199,26 @@ export async function deActivateEnrollment(req: Request, res: Response) {
 }
 
 export async function createCenter(req: Request, res: Response) {
-  const { locationX, locationY, name, adminId } = req.body;
+  try {
+    const { locationX, locationY, name, adminId } = req.body;
 
-  const data = prisma.center.create({
-    data: {
-      locationX,
-      locationY,
-      name,
-      admin: {
-        connect: {
-          id: adminId, // assuming adminId is passed in the request body
+    // Ensure locationX and locationY are converted to numbers
+    const center = await prisma.center.create({
+      data: {
+        locationX: parseFloat(locationX), // Convert to float
+        locationY: parseFloat(locationY), // Convert to float
+        name,
+        admin: {
+          connect: { id: parseInt(adminId) }, // Ensure adminId is a number
         },
       },
-    },
-  });
+    });
 
-  res.json(data);
+    res.json(center);
+  } catch (error) {
+    console.error("Error creating center:", error);
+    res.status(500).json({ error: "Failed to create center", details: error });
+  }
 }
 
 export async function AllEnrollments(req: Request, res: Response) {
@@ -225,6 +263,24 @@ export async function generateMarksheet(req: Request, res: Response) {
 }
 
 export async function exmformfillup(req: Request, res: Response) {}
+
+export async function createCourse(req: Request, res: Response) {
+  const { Duration, Name, price } = req.body;
+
+  try {
+    const data = await prisma.course.create({
+      data: {
+        Duration,
+        Name,
+        price,
+      },
+    });
+
+    res.json({ success: true, data });
+  } catch (error) {
+    console.log(error);
+  }
+}
 
 //branch admin enroll notification goes to central admin
 // branch exam form fillup
