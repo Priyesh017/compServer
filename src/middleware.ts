@@ -12,7 +12,7 @@ export const adminAuthCheckFn = (
   res: Response,
   next: NextFunction
 ) => {
-  const { accessToken } = req.cookies;
+  const { accessToken } = req.signedCookies;
 
   if (!accessToken) {
     res.json({ message: "not valid user" });

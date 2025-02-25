@@ -33,20 +33,17 @@ async function makeCircularImage() {
   console.log(`Circular image saved as ${outputPath}`);
 }
 
-const studentData = {
-  Name: "John Doe",
-  EnrollmentNo: "ENR-123456",
-  CourseName: "Web Development",
-  Branch: "Computer Science",
-  GrandTotal: "850/1000",
+export const formatDateForJS = (date: string) => {
+  const formatted = date.replace(/(\d{2})(\d{2})(\d{4})/, "$3-$2-$1"); // Convert "DDMMYYYY" to "YYYY-MM-DD"
+  return new Date(formatted);
 };
-const qrText = JSON.stringify(studentData);
 
 export const accessTokenCookieOptions: CookieOptions = {
   maxAge: 900000 * 4, // 15 mins
   httpOnly: true,
   sameSite: "none",
   secure: true,
+  signed: true,
 };
 
 export const Cookiehelper = (res: Response, user: any) => {
@@ -59,10 +56,42 @@ export const Cookiehelper = (res: Response, user: any) => {
     .status(200)
     .json({ message: "Login successful", user: userWithoutPassword });
 };
-
-export async function fillCertificate() {
+interface ctype {
+  sName: string;
+  sdwName: string;
+  courseName: string;
+  duration: string;
+  year: string;
+  grade: string;
+  enrollNo: string;
+  centerName: string;
+  iDate: string;
+  Branch: string;
+  GrandTotal: string;
+}
+export async function fillCertificate({
+  sName,
+  sdwName,
+  courseName,
+  duration,
+  year,
+  grade,
+  enrollNo,
+  centerName,
+  iDate,
+  Branch,
+  GrandTotal,
+}: ctype) {
   // it will take id parameter
   // Load the existing PDF
+  const studentData = {
+    Name: sName,
+    EnrollmentNo: enrollNo,
+    CourseName: courseName,
+    Branch,
+    GrandTotal,
+  };
+  const qrText = JSON.stringify(studentData);
   const qrCodeBuffer = await QRCode.toBuffer(qrText);
 
   const existingPdfBytes = fs.readFileSync("files/certificate.pdf");
@@ -102,55 +131,55 @@ export async function fillCertificate() {
     size: 12,
     color: rgb(0, 0, 0),
   });
-  page.drawText("John Doe", {
+  page.drawText(sName, {
     x: 231,
     y: pdfHeight - 265,
     size: fontSize,
     color: rgb(0, 0, 0),
   });
-  page.drawText("Mr. Smith", {
+  page.drawText(sdwName, {
     x: 248,
     y: pdfHeight - 291,
     size: fontSize,
     color: rgb(0, 0, 0),
   });
-  page.drawText("Diploma in Information Technology", {
+  page.drawText(courseName, {
     x: 153,
     y: pdfHeight - 341,
     size: fontSize,
     color: rgb(0, 0, 0),
   });
-  page.drawText("12 Months", {
+  page.drawText(duration, {
     x: 145,
     y: pdfHeight - 367,
     size: fontSize,
     color: rgb(0, 0, 0),
   });
-  page.drawText("2023-2024", {
+  page.drawText(year, {
     x: 472,
     y: pdfHeight - 367,
     size: 15,
     color: rgb(0, 0, 0),
   });
-  page.drawText("A+", {
+  page.drawText(grade, {
     x: 261,
     y: pdfHeight - 392,
     size: fontSize,
     color: rgb(0, 0, 0),
   });
-  page.drawText("ABC123FDD", {
+  page.drawText(enrollNo, {
     x: 483,
     y: pdfHeight - 392,
     size: 15,
     color: rgb(0, 0, 0),
   });
-  page.drawText("jhargram mission national youth computer center", {
+  page.drawText(centerName, {
     x: 218,
     y: pdfHeight - 417,
     size: 16,
     color: rgb(0, 0, 0),
   });
-  page.drawText("10/08/2024", {
+  page.drawText(iDate, {
     x: 249,
     y: pdfHeight - 445,
     size: fontSize,
@@ -163,6 +192,15 @@ export async function fillCertificate() {
 
   console.log("PDF generated successfully: filled_certificate.pdf");
 }
+interface ftype {
+  enrollNo: string;
+  stuName: string;
+  fName: string;
+  courseCode: string;
+  atiCode: string;
+  ecCode: string;
+}
+// {enrollNo,stuName,fName,courseCode,atiCode,ecCode}:ftype
 
 export async function filladmit() {
   const existingPdfBytes = fs.readFileSync("files/admit.pdf");
@@ -278,8 +316,22 @@ export async function filladmit() {
 
   console.log("PDF generated successfully: filled_certificate.pdf");
 }
-
-export async function fillId() {
+interface dtype {
+  sName: string;
+  cName: string;
+  idCardNo: string;
+  enrollmentNo: string;
+  address: string;
+  centerName: string;
+}
+export async function fillId({
+  sName,
+  cName,
+  idCardNo,
+  enrollmentNo,
+  address,
+  centerName,
+}: dtype) {
   const existingPdfBytes = fs.readFileSync("files/id.pdf");
   const pdfDoc = await PDFDocument.load(existingPdfBytes);
   const page = pdfDoc.getPages()[0];
@@ -288,14 +340,14 @@ export async function fillId() {
   // await makeCircularImage();
   const imageBytes = fs.readFileSync("circle.png");
 
-  page.drawText("John Doe", {
+  page.drawText(sName, {
     x: 300,
     y: pdfHeight - 940,
     size: 80,
     color: rgb(0, 0, 0),
   });
 
-  page.drawText("Information Technology", {
+  page.drawText(cName, {
     x: 200,
     y: pdfHeight - 1000,
     size: 70,

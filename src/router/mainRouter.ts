@@ -15,6 +15,7 @@ import {
   generateMarksheet,
   generateId,
   createCourse,
+  studentLogin,
 } from "../controller/mainController";
 
 const router = Router();
@@ -36,5 +37,6 @@ router.route("/generateCertificate").post(generateCertificate);
 router.route("/generateadmit").post(generateadmit);
 router.route("/generateMarksheet").post(generateMarksheet);
 router.route("/generateId").post(generateId);
+router.route("/studentLogin").post(studentLogin);
 
 export default router;

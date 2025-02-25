@@ -1,5 +1,5 @@
 import Bcrypt from "bcryptjs";
-import { Request, Response } from "express";
+import { Request, response, Response } from "express";
 import jwt from "jsonwebtoken";
 import { prisma } from "../client";
 import {
@@ -9,6 +9,7 @@ import {
   fillCertificate,
   fillId,
   fillMarksheet,
+  formatDateForJS,
 } from "../helper";
 
 export async function loginFunc(req: Request, res: Response) {
@@ -81,13 +82,27 @@ export async function signupFunc(req: Request, res: Response) {
 
 export async function loginCheckFunc(req: Request, res: Response) {
   try {
-    const { accessToken } = req.cookies;
+    const { accessToken } = req.signedCookies;
 
     if (!accessToken) {
       res.json({ loggedIn: false });
       return;
     }
-    const user = jwt.verify(accessToken, process.env.TOKEN_SECRET!);
+    const user = jwt.verify(
+      accessToken,
+      process.env.TOKEN_SECRET!
+    ) as jwt.JwtPayload & { eno?: string };
+
+    if (user.eno) {
+      const data = await prisma.enrollment.findFirst({
+        where: {
+          Enrollmentno: user.eno,
+        },
+      });
+
+      res.json({ loggedIn: true, user: data });
+      return;
+    }
 
     res.json({ loggedIn: true, user });
   } catch (err) {
@@ -241,20 +256,19 @@ export async function AllEnrollments(req: Request, res: Response) {
 }
 
 export async function generateCertificate(req: Request, res: Response) {
-  // only center
-
-  fillCertificate().catch((err) => console.error(err));
-  res.json({ data: "kuch hua hai" });
+  await fillCertificate(req.body);
+  res.json({ ok: true });
 }
 
 export async function generateadmit(req: Request, res: Response) {
-  filladmit().catch((err) => console.error(err));
-  res.json({ data: "kuch hua haiiii" });
+  await filladmit();
+  res.json({ ok: true });
 }
 
 export async function generateId(req: Request, res: Response) {
-  fillId().catch((err) => console.error(err));
-  res.json({ data: "kuch hua haiiii<3" });
+  await fillId(req.body);
+
+  res.json({ ok: true });
 }
 
 export async function generateMarksheet(req: Request, res: Response) {
@@ -282,6 +296,31 @@ export async function createCourse(req: Request, res: Response) {
   }
 }
 
+export async function studentLogin(req: Request, res: Response) {
+  const { enrollmentNo, password } = req.body;
+
+  const dob = formatDateForJS(password);
+
+  const data = await prisma.enrollment.findFirst({
+    where: {
+      Enrollmentno: enrollmentNo,
+      dob,
+    },
+  });
+
+  if (!data) {
+    res.json({ success: false });
+    return;
+  }
+
+  const token = jwt.sign({ eno: enrollmentNo }, process.env.TOKEN_SECRET!, {
+    expiresIn: "1h",
+  });
+  res
+    .cookie("accessToken", token, accessTokenCookieOptions)
+    .status(200)
+    .json({ success: true, data });
+}
 //branch admin enroll notification goes to central admin
 // branch exam form fillup
 
