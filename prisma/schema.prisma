@@ -22,19 +22,19 @@ model User {
 }
 
 model Center {
-  id        Int          @id @default(autoincrement())
-  name      String
-  locationX Float
-  locationY Float
-  Student   Enrollment[]
-  admin     User         @relation(fields: [adminid], references: [id], onDelete: Cascade)
-  adminid   Int          @unique
+  id         Int          @id @default(autoincrement())
+  Centername String
+  locationX  Float
+  locationY  Float
+  Student    Enrollment[]
+  admin      User         @relation(fields: [adminid], references: [id], onDelete: Cascade)
+  adminid    Int          @unique
 }
 
 model Enrollment {
   id              Int    @id @default(autoincrement())
-  Enrollmentno    String
-  IdCardNo        String
+  Enrollmentno    String @unique
+  IdCardNo        String @unique
   idCardLink      String @default("")
   admitLink       String @default("")
   certificateLink String @default("")
@@ -58,15 +58,15 @@ model Enrollment {
   course   Course @relation(fields: [courseId], references: [id])
   courseId Int
 
-  centerName   Center @relation(fields: [centerNameid], references: [id])
-  centerNameid Int
+  center   Center @relation(fields: [centerid], references: [id])
+  centerid Int
 
   @@index([Enrollmentno])
 }
 
 model Course {
   id       Int    @id @default(autoincrement())
-  Name     String
+  CName    String
   price    Int
   Duration Int
 
@@ -74,15 +74,15 @@ model Course {
 }
 
 model Amount {
-  id                   Int    @id @default(autoincrement())
-  EnrollmentNo         String
+  id Int @id @default(autoincrement())
+
   TotalPaid            Int
   amountRemain         Int
-  Approval             Int
+  Approval             Boolean
   lastPaymentRecieptno String
 
-  enrollment   Enrollment @relation(fields: [enrollmentId], references: [id])
-  enrollmentId Int        @unique
+  enrollment   Enrollment @relation(fields: [EnrollmentNo], references: [Enrollmentno])
+  EnrollmentNo String     @unique
 }
 
 model ExamForm {

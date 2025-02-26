@@ -165,14 +165,14 @@ export async function createEnrollment(req: Request, res: Response) {
         wpNo,
         course: {
           connect: {
-            id: 2,
+            id: 1,
           },
         },
         Enrollmentno,
         eduqualification,
         IdCardNo,
 
-        centerName: {
+        center: {
           connect: {
             id: 1,
           },
@@ -215,14 +215,14 @@ export async function deActivateEnrollment(req: Request, res: Response) {
 
 export async function createCenter(req: Request, res: Response) {
   try {
-    const { locationX, locationY, name, adminId } = req.body;
+    const { locationX, locationY, Centername, adminId } = req.body;
 
     // Ensure locationX and locationY are converted to numbers
     const center = await prisma.center.create({
       data: {
         locationX: parseFloat(locationX), // Convert to float
         locationY: parseFloat(locationY), // Convert to float
-        name,
+        Centername,
         admin: {
           connect: { id: parseInt(adminId) }, // Ensure adminId is a number
         },
@@ -276,16 +276,43 @@ export async function generateMarksheet(req: Request, res: Response) {
   res.json({ data: "kuch hua haiiii" });
 }
 
-export async function exmformfillup(req: Request, res: Response) {}
+export async function exmformfillup(req: Request, res: Response) {
+  const { Enrollmentno } = req.body;
+
+  const data = await prisma.enrollment.findFirst({
+    where: {
+      Enrollmentno,
+    },
+    include: {
+      amount: {
+        select: {
+          lastPaymentRecieptno: true,
+        },
+      },
+      center: {
+        select: {
+          Centername: true,
+        },
+      },
+      course: {
+        select: {
+          CName: true,
+        },
+      },
+    },
+  });
+
+  res.json({ success: true, data });
+}
 
 export async function createCourse(req: Request, res: Response) {
-  const { Duration, Name, price } = req.body;
+  const { Duration, CName, price } = req.body;
 
   try {
     const data = await prisma.course.create({
       data: {
         Duration,
-        Name,
+        CName,
         price,
       },
     });
