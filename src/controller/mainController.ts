@@ -1,5 +1,5 @@
 import Bcrypt from "bcryptjs";
-import { Request, response, Response } from "express";
+import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { prisma } from "../client";
 import {
@@ -196,7 +196,7 @@ export async function ActivateEnrollment(req: Request, res: Response) {
     },
   });
 
-  res.json(val);
+  res.json({ ok: true, val });
 }
 
 export async function deActivateEnrollment(req: Request, res: Response) {
@@ -210,7 +210,7 @@ export async function deActivateEnrollment(req: Request, res: Response) {
     },
   });
 
-  res.json(val);
+  res.json({ ok: true, val });
 }
 
 export async function createCenter(req: Request, res: Response) {
