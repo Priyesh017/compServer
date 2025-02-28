@@ -13,12 +13,12 @@ enum Role {
 }
 
 model User {
-  id       Int     @id @default(autoincrement())
-  email    String  @unique
+  id       Int      @id @default(autoincrement())
+  email    String   @unique
   name     String?
-  role     Role    @default(CENTER)
+  role     Role     @default(CENTER)
   password String
-  Center   Center?
+  Center   Center[] // central admin onek center manage korte parbe
 }
 
 model Center {
@@ -28,7 +28,7 @@ model Center {
   locationY  Float
   Student    Enrollment[]
   admin      User         @relation(fields: [adminid], references: [id], onDelete: Cascade)
-  adminid    Int          @unique
+  adminid    Int
   address    String
 }
 
