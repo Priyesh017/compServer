@@ -16,27 +16,50 @@ import {
   generateId,
   createCourse,
   studentLogin,
+  exmformfillupDatafetch,
+  exmmarksentry,
+  exmformsfetch,
+  marksheetfetch,
+  exmformDisApprove,
+  exmmarksApprove,
+  TakeEnquiry,
+  examFormFillup,
+  exmformApprove,
+  exmmarksDisApprove,
 } from "../controller/mainController";
+import { ErrorHandler } from "../errhandling";
 
 const router = Router();
 
 router.route("/loginRoute").post(loginFunc);
 router.route("/loginCheckRoute").get(loginCheckFunc);
-router.route("/logout").get(logoutfunc);
+router.route("/logout").get(ErrorHandler(logoutfunc));
 router.route("/signupRoute").post(signupFunc);
 
-router.route("/createCenter").post(createCenter);
-router.route("/AllEnrollments").get(AllEnrollments);
-router.route("/deActivateEnrollment").post(deActivateEnrollment);
-router.route("/ActivateEnrollment").post(ActivateEnrollment);
-router.route("/createEnrollment").post(createEnrollment);
-router.route("/enrollCheck").post(enrollCheck);
-router.route("/createCourse").post(createCourse);
+router.route("/createCenter").post(ErrorHandler(createCenter));
+router.route("/AllEnrollments").get(ErrorHandler(AllEnrollments));
+router.route("/deActivateEnrollment").post(ErrorHandler(deActivateEnrollment));
+router.route("/ActivateEnrollment").post(ErrorHandler(ActivateEnrollment));
+router.route("/createEnrollment").post(ErrorHandler(createEnrollment));
+router.route("/enrollCheck").post(ErrorHandler(enrollCheck));
+router.route("/createCourse").post(ErrorHandler(createCourse));
 
-router.route("/generateCertificate").post(generateCertificate);
-router.route("/generateadmit").post(generateadmit);
-router.route("/generateMarksheet").post(generateMarksheet);
-router.route("/generateId").post(generateId);
-router.route("/studentLogin").post(studentLogin);
+router.route("/generateCertificate").post(ErrorHandler(generateCertificate));
+router.route("/generateadmit").post(ErrorHandler(generateadmit));
+router.route("/generateMarksheet").post(ErrorHandler(generateMarksheet));
+router.route("/generateId").post(ErrorHandler(generateId));
+router.route("/studentLogin").post(ErrorHandler(studentLogin));
+router
+  .route("/exmformfillupDatafetch")
+  .post(ErrorHandler(exmformfillupDatafetch));
+router.route("/exmmarksentry").post(ErrorHandler(exmmarksentry));
+router.route("/exmformsfetch").get(ErrorHandler(exmformsfetch));
+router.route("/marksheetfetch").get(ErrorHandler(marksheetfetch));
+router.route("/exmformDisApprove").post(ErrorHandler(exmformDisApprove));
+router.route("/exmmarksApprove").post(ErrorHandler(exmmarksApprove));
+router.route("/TakeEnquiry").post(ErrorHandler(TakeEnquiry));
+router.route("/examFormFillup").post(ErrorHandler(examFormFillup));
+router.route("/exmformApprove").post(ErrorHandler(exmformApprove));
+router.route("/exmmarksDisApprove").post(ErrorHandler(exmmarksDisApprove));
 
 export default router;

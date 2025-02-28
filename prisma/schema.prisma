@@ -29,6 +29,7 @@ model Center {
   Student    Enrollment[]
   admin      User         @relation(fields: [adminid], references: [id], onDelete: Cascade)
   adminid    Int          @unique
+  address    String
 }
 
 model Enrollment {
@@ -90,24 +91,34 @@ model Amount {
 model ExamForm {
   id Int @id @default(autoincrement())
 
-  enrollment   Enrollment @relation(fields: [EnrollmentId], references: [id])
-  EnrollmentId Int        @unique
+  enrollment   Enrollment @relation(fields: [EnrollmentNo], references: [Enrollmentno])
+  EnrollmentNo String     @unique
   verified     Boolean    @default(false)
   createdAt    DateTime   @default(now())
 }
 
 model Marks {
   id           Int        @id @default(autoincrement())
-  totalmarks   Int
+  marks        Json
   remarks      Remark
-  enrollment   Enrollment @relation(fields: [EnrollmentId], references: [id])
-  EnrollmentId Int        @unique
-
-  verified  Boolean  @default(false)
-  createdAt DateTime @default(now())
+  enrollment   Enrollment @relation(fields: [EnrollmentNo], references: [Enrollmentno])
+  EnrollmentNo String     @unique
+  grade        String
+  totalMarks   Float
+  percentage   Float
+  verified     Boolean    @default(false)
+  createdAt    DateTime   @default(now())
+  year         String
 }
 
 enum Remark {
   PASS
   FAIL
+}
+
+model Enquiry {
+  id      Int    @id @default(autoincrement())
+  name    String
+  email   String
+  message String
 }

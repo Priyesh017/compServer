@@ -4,8 +4,39 @@ import fs from "fs";
 import { PDFDocument, rgb } from "pdf-lib";
 import QRCode from "qrcode";
 import sharp from "sharp";
+import { PutObjectCommand } from "@aws-sdk/client-s3";
+import { s3 } from "./client";
 
-// Student details
+interface ftype {
+  enrollNo: string;
+  stuName: string;
+  fName: string;
+  courseCode: string;
+  atiCode: string;
+  ecCode: string;
+}
+
+interface dtype {
+  sName: string;
+  cName: string;
+  idCardNo: string;
+  enrollmentNo: string;
+  address: string;
+  centerName: string;
+}
+interface ctype {
+  sName: string;
+  sdwName: string;
+  courseName: string;
+  duration: string;
+  year: string;
+  grade: string;
+  enrollNo: string;
+  centerName: string;
+  iDate: string;
+  Branch: string;
+  GrandTotal: string;
+}
 
 async function makeCircularImage() {
   const inputPath = "files/temp.jpg"; // Replace with your square image
@@ -56,19 +87,7 @@ export const Cookiehelper = (res: Response, user: any) => {
     .status(200)
     .json({ message: "Login successful", user: userWithoutPassword });
 };
-interface ctype {
-  sName: string;
-  sdwName: string;
-  courseName: string;
-  duration: string;
-  year: string;
-  grade: string;
-  enrollNo: string;
-  centerName: string;
-  iDate: string;
-  Branch: string;
-  GrandTotal: string;
-}
+
 export async function fillCertificate({
   sName,
   sdwName,
@@ -192,14 +211,7 @@ export async function fillCertificate({
 
   console.log("PDF generated successfully: filled_certificate.pdf");
 }
-interface ftype {
-  enrollNo: string;
-  stuName: string;
-  fName: string;
-  courseCode: string;
-  atiCode: string;
-  ecCode: string;
-}
+
 // {enrollNo,stuName,fName,courseCode,atiCode,ecCode}:ftype
 
 export async function filladmit() {
@@ -316,14 +328,7 @@ export async function filladmit() {
 
   console.log("PDF generated successfully: filled_certificate.pdf");
 }
-interface dtype {
-  sName: string;
-  cName: string;
-  idCardNo: string;
-  enrollmentNo: string;
-  address: string;
-  centerName: string;
-}
+
 export async function fillId({
   sName,
   cName,
@@ -454,8 +459,20 @@ export async function fillMarksheet() {
   });
 
   const pdfBytes = await pdfDoc.save();
+
+  const params = {
+    Bucket: process.env.AWS_BUCKET_NAME,
+    Key: `marksheet/filled_marksheet_${Date.now()}.pdf`,
+    Body: pdfBytes,
+    ContentType: "application/pdf",
+  };
+
+  const command = new PutObjectCommand(params);
+  await s3.send(command);
+
   fs.writeFileSync("filled_Marksheet.pdf", pdfBytes);
 
   console.log("PDF generated successfully: filled_marksheet.pdf");
 }
+
 // uthate gele komabo
