@@ -27,9 +27,10 @@ model Center {
   locationX  Float
   locationY  Float
   Student    Enrollment[]
-  admin      User         @relation(fields: [adminid], references: [id], onDelete: Cascade)
+  admin      User?        @relation(fields: [adminid], references: [id], onDelete: Cascade)
   adminid    Int
-  address    String
+  address    String?
+  code       String?
 }
 
 model Enrollment {
@@ -56,7 +57,7 @@ model Enrollment {
   marks          Marks?
   amount         Amount?
 
-  course   Course @relation(fields: [courseId], references: [id])
+  course   Course? @relation(fields: [courseId], references: [id])
   courseId Int
 
   center    Center   @relation(fields: [centerid], references: [id])

@@ -435,17 +435,16 @@ export async function marksheetfetch(req: Request, res: Response) {
   const data = await prisma.marks.findMany({
     where: {
       enrollment: {
-        centerid: 1,
+        centerid: 1, // Filter by center ID inside enrollment
       },
     },
     include: {
       enrollment: {
+        // First include enrollment
         select: {
           name: true,
           father: true,
           dob: true,
-        },
-        include: {
           course: {
             select: {
               CName: true,
