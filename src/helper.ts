@@ -38,6 +38,28 @@ interface ctype {
   GrandTotal: string;
 }
 
+interface mtype {
+  sName: string;
+  enrollNo: string;
+  swdName: string;
+  year: string;
+  courseName: string;
+  courseDuration: string;
+  centerName: string;
+  institueCode: string;
+  centerAddress: string;
+  iDate: string;
+  subjectName: string;
+  tfm: string;
+  pfm: string;
+  tm: string;
+  pm: string;
+  grandTotal: string;
+  percentage: string;
+  grade: string;
+  result: string;
+}
+
 async function makeCircularImage() {
   const inputPath = "files/temp.jpg"; // Replace with your square image
   const outputPath = "circle.png"; // Output will be a PNG (supports transparency)
@@ -453,41 +475,159 @@ export async function fillId({
   console.log("PDF generated successfully: filled_id.pdf");
 }
 
-export async function fillMarksheet() {
+export async function fillMarksheet({
+  sName,
+  enrollNo,
+  swdName,
+  year,
+  courseName,
+  courseDuration,
+  centerName,
+  institueCode,
+  centerAddress,
+  iDate,
+  subjectName,
+  tfm,
+  pfm,
+  tm,
+  pm,
+  grandTotal,
+  percentage,
+  grade,
+  result,
+}: mtype) {
   const existingPdfBytes = fs.readFileSync("files/marksheet.pdf");
   const pdfDoc = await PDFDocument.load(existingPdfBytes);
   const page = pdfDoc.getPages()[0];
   const pdfHeight = page.getHeight();
 
-  page.drawText("John Doe", {
+  page.drawText(sName, {
     x: 156,
     y: pdfHeight - 218,
     size: 15,
     color: rgb(0, 0, 0),
   });
 
-  page.drawText("John Doe", {
+  page.drawText(enrollNo, {
     x: 156,
     y: pdfHeight - 243,
     size: 15,
     color: rgb(0, 0, 0),
   });
 
-  page.drawText("John Doe", {
+  page.drawText(swdName, {
     x: 156,
     y: pdfHeight - 269,
     size: 15,
     color: rgb(0, 0, 0),
   });
 
-  page.drawText("John Doe", {
+  page.drawText(year, {
     x: 156,
     y: pdfHeight - 295,
     size: 15,
     color: rgb(0, 0, 0),
   });
 
-  page.drawText("John Doe", {
+  page.drawText(courseName, {
+    x: 156,
+    y: pdfHeight - 320,
+    size: 15,
+    color: rgb(0, 0, 0),
+  });
+
+  page.drawText(courseDuration, {
+    x: 156,
+    y: pdfHeight - 320,
+    size: 15,
+    color: rgb(0, 0, 0),
+  });
+
+  page.drawText(centerName, {
+    x: 156,
+    y: pdfHeight - 320,
+    size: 15,
+    color: rgb(0, 0, 0),
+  });
+
+  page.drawText(institueCode, {
+    x: 156,
+    y: pdfHeight - 320,
+    size: 15,
+    color: rgb(0, 0, 0),
+  });
+
+  page.drawText(centerAddress, {
+    x: 156,
+    y: pdfHeight - 320,
+    size: 15,
+    color: rgb(0, 0, 0),
+  });
+
+  page.drawText(iDate, {
+    x: 156,
+    y: pdfHeight - 320,
+    size: 15,
+    color: rgb(0, 0, 0),
+  });
+
+  page.drawText(subjectName, {
+    x: 156,
+    y: pdfHeight - 320,
+    size: 15,
+    color: rgb(0, 0, 0),
+  });
+
+  page.drawText(tfm, {
+    x: 156,
+    y: pdfHeight - 320,
+    size: 15,
+    color: rgb(0, 0, 0),
+  });
+
+  page.drawText(pfm, {
+    x: 156,
+    y: pdfHeight - 320,
+    size: 15,
+    color: rgb(0, 0, 0),
+  });
+
+  page.drawText(tm, {
+    x: 156,
+    y: pdfHeight - 320,
+    size: 15,
+    color: rgb(0, 0, 0),
+  });
+
+  page.drawText(pm, {
+    x: 156,
+    y: pdfHeight - 320,
+    size: 15,
+    color: rgb(0, 0, 0),
+  });
+
+  page.drawText(grandTotal, {
+    x: 156,
+    y: pdfHeight - 320,
+    size: 15,
+    color: rgb(0, 0, 0),
+  });
+
+  page.drawText(percentage, {
+    x: 156,
+    y: pdfHeight - 320,
+    size: 15,
+    color: rgb(0, 0, 0),
+  });
+
+  page.drawText(grade, {
+    x: 156,
+    y: pdfHeight - 320,
+    size: 15,
+    color: rgb(0, 0, 0),
+  });
+
+  page.drawText(result, {
     x: 156,
     y: pdfHeight - 320,
     size: 15,
