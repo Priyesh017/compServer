@@ -230,11 +230,21 @@ export async function AllEnrollments(req: Request, res: Response) {
   const limit = parseInt(req.query.limit as string) || 10; // Default limit 10
 
   const skip = (page - 1) * limit; // Calculate offset
-
+  //FIXME  ONLY sei center er id diye
   try {
     const enrollments = await prisma.enrollment.findMany({
       skip,
       take: limit,
+      select: {
+        admitLink: true,
+        certificateLink: true,
+        dob: true,
+        idCardLink: true,
+        marksheetLink: true,
+        name: true,
+        createdAt: true,
+        Enrollmentno: true,
+      },
     });
 
     res.json(enrollments);
@@ -417,6 +427,26 @@ export async function exmformsfetch(req: Request, res: Response) {
       enrollment: {
         select: {
           name: true,
+          mobileNo: true,
+          wpNo: true,
+          Enrollmentno: true,
+          address: true,
+          center: {
+            select: {
+              Centername: true,
+            },
+          },
+          IdCardNo: true,
+          amount: {
+            select: {
+              lastPaymentRecieptno: true,
+            },
+          },
+          course: {
+            select: {
+              CName: true,
+            },
+          },
         },
       },
     },
@@ -490,6 +520,26 @@ export async function examFormFillup(req: Request, res: Response) {
   });
 
   res.json({ ok: true, data });
+}
+
+export async function amountFetch(req: Request, res: Response) {
+  const { id } = req.body;
+
+  const data = await prisma.enrollment.findMany({
+    where: {
+      centerid: id,
+    },
+    include: {
+      amount: {
+        select: {
+          amountRemain: true,
+          TotalPaid: true,
+        },
+      },
+    },
+  });
+
+  res.json({ data });
 }
 
 // enrollment activated on thakle id card download korte parbe
