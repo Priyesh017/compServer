@@ -271,8 +271,10 @@ export async function generateId(req: Request, res: Response) {
 }
 
 export async function generateMarksheet(req: Request, res: Response) {
-  fillMarksheet().catch((err) => console.error(err));
-  res.json({ data: "kuch hua haiiii" });
+  // fillMarksheet().catch((err) => console.error(err));
+  await fillMarksheet(req.body);
+  // res.json({ data: "kuch hua haiiii" });
+  res.json({ ok: true });
 }
 
 export async function exmformfillupDatafetch(req: Request, res: Response) {
