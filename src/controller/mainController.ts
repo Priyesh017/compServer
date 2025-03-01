@@ -206,7 +206,7 @@ export async function deActivateEnrollment(req: Request, res: Response) {
 }
 
 export async function createCenter(req: Request, res: Response) {
-  const { locationX, locationY, Centername, adminId, address } = req.body;
+  const { locationX, locationY, Centername, adminId, address, code } = req.body;
 
   // Ensure locationX and locationY are converted to numbers
   const center = await prisma.center.create({
@@ -218,6 +218,7 @@ export async function createCenter(req: Request, res: Response) {
         connect: { id: parseInt(adminId) }, // Ensure adminId is a number
       },
       address,
+      code,
     },
   });
 
@@ -544,6 +545,9 @@ export async function amountFetch(req: Request, res: Response) {
   res.json({ data });
 }
 
+export async function amountEdit(req: Request, res: Response) {
+  const {} = req.body;
+}
 // enrollment activated on thakle id card download korte parbe
 // examform fillup verified thakle admit download kora jabe
 // marksheet e pass thakle certificate download kora jabe and always result download hobe
