@@ -341,49 +341,85 @@ export async function fillId({
   const pdfDoc = await PDFDocument.load(existingPdfBytes);
   const page = pdfDoc.getPages()[0];
   const pdfHeight = page.getHeight();
+  const pdfWidth = page.getWidth();
 
   // await makeCircularImage();
   const imageBytes = fs.readFileSync("circle.png");
 
+  const adjustCenteredTextPosition = (
+    text: string,
+    pdfWidth: number,
+    pdfHeight: number,
+    yOffset: number, // Allows positioning different texts at different heights
+    baseFontSize: number = 80
+  ) => {
+    let fontSize = baseFontSize;
+    const avgCharWidth = fontSize * 0.5; // Approximate character width (adjust if needed)
+    const textWidth = text.length * avgCharWidth; // Estimate text width
+
+    // Calculate X position to center the text
+    const x = (pdfWidth - textWidth) / 2;
+
+    // Adjust Y position with the given offset
+    const y = pdfHeight - yOffset;
+
+    return { x, y, size: fontSize };
+  };
+
+  const sNamePosition = adjustCenteredTextPosition(
+    sName,
+    pdfWidth,
+    pdfHeight,
+    940,
+    80
+  );
+  const cNamePosition = adjustCenteredTextPosition(
+    cName,
+    pdfWidth,
+    pdfHeight,
+    1020,
+    60
+  );
+
   page.drawText(sName, {
-    x: 300,
-    y: pdfHeight - 940,
-    size: 80,
+    x: sNamePosition.x,
+    y: sNamePosition.y,
+    size: sNamePosition.size,
     color: rgb(0, 0, 0),
   });
 
   page.drawText(cName, {
-    x: 200,
-    y: pdfHeight - 1000,
-    size: 70,
+    x: cNamePosition.x,
+    y: cNamePosition.y,
+    size: cNamePosition.size,
     color: rgb(0, 1, 0),
   });
 
-  page.drawText("ID NO    :", {
-    x: 156,
+  page.drawText(`ID NO: ${idCardNo}`, {
+    x: 80,
     y: pdfHeight - 1100,
-    size: 65,
+    size: 60,
     color: rgb(0, 0, 0),
   });
 
-  page.drawText("ENROLLMENT  :", {
-    x: 156,
+  page.drawText(`ENROLLMENT: ${enrollmentNo}`, {
+    x: 70,
     y: pdfHeight - 1180,
-    size: 65,
+    size: 60,
     color: rgb(0, 0, 0),
   });
 
-  page.drawText("ADDRESS   :", {
-    x: 156,
+  page.drawText(`ADDRESS: ${address}`, {
+    x: 70,
     y: pdfHeight - 1260,
-    size: 65,
+    size: 60,
     color: rgb(0, 0, 0),
   });
 
-  page.drawText("CENTER  :", {
-    x: 156,
+  page.drawText(`CENTER: ${centerName}`, {
+    x: 70,
     y: pdfHeight - 1340,
-    size: 65,
+    size: 60,
     color: rgb(0, 0, 0),
   });
 
@@ -460,15 +496,15 @@ export async function fillMarksheet() {
 
   const pdfBytes = await pdfDoc.save();
 
-  const params = {
-    Bucket: process.env.AWS_BUCKET_NAME,
-    Key: `marksheet/filled_marksheet_${Date.now()}.pdf`,
-    Body: pdfBytes,
-    ContentType: "application/pdf",
-  };
+  // const params = {
+  //   Bucket: process.env.AWS_BUCKET_NAME,
+  //   Key: `marksheet/filled_marksheet_${Date.now()}.pdf`,
+  //   Body: pdfBytes,
+  //   ContentType: "application/pdf",
+  // };
 
-  const command = new PutObjectCommand(params);
-  await s3.send(command);
+  // const command = new PutObjectCommand(params);
+  // await s3.send(command);
 
   fs.writeFileSync("filled_Marksheet.pdf", pdfBytes);
 
