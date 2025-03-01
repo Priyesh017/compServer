@@ -92,10 +92,12 @@ model Amount {
 model ExamForm {
   id Int @id @default(autoincrement())
 
-  enrollment   Enrollment @relation(fields: [EnrollmentNo], references: [Enrollmentno])
-  EnrollmentNo String     @unique
-  verified     Boolean    @default(false)
-  createdAt    DateTime   @default(now())
+  enrollment     Enrollment @relation(fields: [EnrollmentNo], references: [Enrollmentno])
+  EnrollmentNo   String     @unique
+  verified       Boolean    @default(false)
+  createdAt      DateTime   @default(now())
+  ExamCenterCode String
+  ATI_CODE       String
 }
 
 model Marks {
