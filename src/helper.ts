@@ -87,7 +87,25 @@ export const Cookiehelper = (res: Response, user: any) => {
     .status(200)
     .json({ message: "Login successful", user: userWithoutPassword });
 };
+const adjustCenteredTextPosition = (
+  text: string,
+  pdfWidth: number,
+  pdfHeight: number,
+  yOffset: number, // Allows positioning different texts at different heights
+  baseFontSize: number = 80
+) => {
+  let fontSize = baseFontSize;
+  const avgCharWidth = fontSize * 0.5; // Approximate character width (adjust if needed)
+  const textWidth = text.length * avgCharWidth; // Estimate text width
 
+  // Calculate X position to center the text
+  const x = (pdfWidth - textWidth) / 2;
+
+  // Adjust Y position with the given offset
+  const y = pdfHeight - yOffset;
+
+  return { x, y, size: fontSize };
+};
 export async function fillCertificate({
   sName,
   sdwName,
@@ -345,26 +363,6 @@ export async function fillId({
 
   // await makeCircularImage();
   const imageBytes = fs.readFileSync("circle.png");
-
-  const adjustCenteredTextPosition = (
-    text: string,
-    pdfWidth: number,
-    pdfHeight: number,
-    yOffset: number, // Allows positioning different texts at different heights
-    baseFontSize: number = 80
-  ) => {
-    let fontSize = baseFontSize;
-    const avgCharWidth = fontSize * 0.5; // Approximate character width (adjust if needed)
-    const textWidth = text.length * avgCharWidth; // Estimate text width
-
-    // Calculate X position to center the text
-    const x = (pdfWidth - textWidth) / 2;
-
-    // Adjust Y position with the given offset
-    const y = pdfHeight - yOffset;
-
-    return { x, y, size: fontSize };
-  };
 
   const sNamePosition = adjustCenteredTextPosition(
     sName,

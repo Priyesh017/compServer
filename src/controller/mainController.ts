@@ -511,11 +511,13 @@ export async function TakeEnquiry(req: Request, res: Response) {
 }
 
 export async function examFormFillup(req: Request, res: Response) {
-  const { enrollmentNo } = req.body;
+  const { enrollmentNo, ATI_CODE, ExamCenterCode } = req.body;
 
   const data = await prisma.examForm.create({
     data: {
       EnrollmentNo: enrollmentNo,
+      ATI_CODE,
+      ExamCenterCode,
     },
   });
 
