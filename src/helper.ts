@@ -58,15 +58,15 @@ export type MarksheetData = {
 
   marks: {
     subject: string;
-    theoryMarks: number;
-    practicalMarks: number;
-    theoryFullMarks: number;
-    practicalFullMarks: number;
+    theoryMarks: string;
+    practicalMarks: string;
+    theoryFullMarks: string;
+    practicalFullMarks: string;
   }[];
 
   percentage: number;
   grade: string;
-
+  EnrollmentNo: string;
   remarks: string;
   totalMarks: number;
 };
@@ -490,146 +490,204 @@ export async function fillMarksheet(data: MarksheetData) {
   const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold); // Embed bold font
 
   // Student Information
-  page.drawText(data.sName, {
+  page.drawText(data.enrollment.name.toUpperCase(), {
     x: 158,
     y: pdfHeight - 218,
-    size: 13,
-    font: boldFont,
+    size: 12,
     color: rgb(0, 0, 0),
   });
-  page.drawText(data.Enrollmentno, {
+  page.drawText(data.EnrollmentNo.toUpperCase(), {
     x: 487,
     y: pdfHeight - 218,
-    size: 13,
-    font: boldFont,
+    size: 12,
     color: rgb(0, 0, 0),
   });
-  page.drawText(data.swdName, {
+  page.drawText(data.enrollment.father.toUpperCase(), {
     x: 102,
     y: pdfHeight - 243,
-    size: 13,
-    font: boldFont,
+    size: 12,
     color: rgb(0, 0, 0),
   });
   page.drawText(data.year, {
     x: 415,
     y: pdfHeight - 243,
-    size: 13,
-    font: boldFont,
+    size: 12,
     color: rgb(0, 0, 0),
   });
-  page.drawText(data.courseName, {
+  page.drawText(data.enrollment.course.CName.toUpperCase(), {
     x: 136,
     y: pdfHeight - 269,
-    size: 13,
-    font: boldFont,
+    size: 12,
     color: rgb(0, 0, 0),
   });
-  page.drawText(data.courseDuration, {
+  page.drawText(data.enrollment.course.Duration.toString().toUpperCase(), {
     x: 500,
     y: pdfHeight - 269,
-    size: 13,
-    font: boldFont,
+    size: 12,
     color: rgb(0, 0, 0),
   });
-  page.drawText(data.centerName, {
-    x: 133,
-    y: pdfHeight - 295,
-    size: 13,
-    font: boldFont,
+  page.drawText(data.enrollment.center.Centername.toUpperCase(), {
+    x: 130,
+    y: pdfHeight - 294,
+    size: 10,
     color: rgb(0, 0, 0),
   });
-  page.drawText(data.institueCode, {
+  page.drawText(data.enrollment.center.code.toUpperCase(), {
     x: 480,
     y: pdfHeight - 295,
-    size: 13,
-    font: boldFont,
+    size: 12,
     color: rgb(0, 0, 0),
   });
-  page.drawText(data.centerAddress, {
+  page.drawText(data.enrollment.center.address.toUpperCase(), {
     x: 146,
     y: pdfHeight - 320,
-    size: 13,
-    font: boldFont,
+    size: 12,
     color: rgb(0, 0, 0),
   });
-  page.drawText(data.iDate, {
+  page.drawText(data.enrollment.dob.toLocaleDateString(), {
     x: 470,
     y: pdfHeight - 320,
-    size: 13,
-    font: boldFont,
+    size: 12,
     color: rgb(0, 0, 0),
   });
+
+  // Initialize total marks
+  let totalTheoryMarks = 0;
+  let totalPracticalMarks = 0;
+  let totalTheoryFullMarks = 0;
+  let totalPracticalFullMarks = 0;
+
+  let sl = 1;
 
   // Subjects and Marks
   let yPosition = pdfHeight - 410;
 
   data.marks.forEach((subject) => {
+    const tm = parseInt(subject.theoryMarks);
+    const pm = parseInt(subject.practicalMarks);
+    const tfm = parseInt(subject.theoryFullMarks);
+    const pfm = parseInt(subject.practicalFullMarks);
+    const total = tm + pm;
+
+    totalTheoryMarks += tm;
+    totalPracticalMarks += pm;
+    totalTheoryFullMarks += tfm;
+    totalPracticalFullMarks += pfm;
+
+    page.drawText(sl.toString(), {
+      x: 28,
+      y: yPosition,
+      size: 13,
+      font: boldFont,
+      color: rgb(0, 0, 0),
+    });
+
+    sl++;
+
     page.drawText(subject.subject, {
       x: 60,
       y: yPosition,
-      size: 15,
+      size: 13,
       font: boldFont,
       color: rgb(0, 0, 0),
     });
     page.drawText(subject.theoryFullMarks.toString(), {
       x: 290,
       y: yPosition,
-      size: 15,
+      size: 13,
       font: boldFont,
       color: rgb(0, 0, 0),
     });
     page.drawText(subject.practicalFullMarks.toString(), {
       x: 355,
       y: yPosition,
-      size: 15,
+      size: 13,
       font: boldFont,
       color: rgb(0, 0, 0),
     });
     page.drawText(subject.theoryMarks.toString(), {
       x: 430,
       y: yPosition,
-      size: 15,
+      size: 13,
       font: boldFont,
       color: rgb(0, 0, 0),
     });
     page.drawText(subject.practicalMarks.toString(), {
       x: 495,
       y: yPosition,
-      size: 15,
+      size: 13,
+      font: boldFont,
+      color: rgb(0, 0, 0),
+    });
+    page.drawText(total.toString(), {
+      x: 555,
+      y: yPosition,
+      size: 13,
       font: boldFont,
       color: rgb(0, 0, 0),
     });
 
-    yPosition -= 30; // Move to the next row
+    yPosition -= 25; // Move to the next row
+  });
+
+  page.drawText(totalTheoryFullMarks.toString(), {
+    x: 290,
+    y: pdfHeight - 645,
+    size: 13,
+    font: boldFont,
+    color: rgb(0, 0, 0),
+  });
+
+  page.drawText(totalPracticalFullMarks.toString(), {
+    x: 355,
+    y: pdfHeight - 645,
+    size: 13,
+    font: boldFont,
+    color: rgb(0, 0, 0),
+  });
+
+  page.drawText(totalTheoryMarks.toString(), {
+    x: 426,
+    y: pdfHeight - 645,
+    size: 13,
+    font: boldFont,
+    color: rgb(0, 0, 0),
+  });
+
+  page.drawText(totalPracticalMarks.toString(), {
+    x: 490,
+    y: pdfHeight - 645,
+    size: 13,
+    font: boldFont,
+    color: rgb(0, 0, 0),
   });
 
   // Grand Total, Percentage, Grade, and Result
-  page.drawText(data.grandTotal.toString(), {
+  page.drawText(data.totalMarks.toString(), {
     x: 555,
     y: pdfHeight - 645,
-    size: 15,
+    size: 13,
     font: boldFont,
     color: rgb(0, 0, 0),
   });
   page.drawText(data.percentage.toFixed(2) + "%", {
-    x: 292,
+    x: 285,
     y: pdfHeight - 672,
-    size: 15,
+    size: 13,
     font: boldFont,
     color: rgb(0, 0, 0),
   });
   page.drawText(data.grade, {
     x: 560,
     y: pdfHeight - 672,
-    size: 15,
+    size: 13,
     font: boldFont,
     color: rgb(0, 0, 0),
   });
-  page.drawText(data.result, {
+  page.drawText(data.remarks, {
     x: 50,
     y: pdfHeight - 672,
-    size: 15,
+    size: 13,
     font: boldFont,
     color: rgb(0, 0, 0),
   });
