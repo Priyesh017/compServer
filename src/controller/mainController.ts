@@ -287,8 +287,6 @@ export async function generateMarksheet(req: Request, res: Response) {
           father: true,
           mother: true,
           dob: true,
-        },
-        include: {
           center: {
             select: {
               Centername: true,
