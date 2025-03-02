@@ -38,27 +38,38 @@ interface ctype {
   GrandTotal: string;
 }
 
-interface mtype {
-  sName: string;
-  enrollNo: string;
-  swdName: string;
+export type MarksheetData = {
+  enrollment: {
+    name: string;
+    father: string;
+    mother: string;
+    dob: Date;
+    center: {
+      Centername: string;
+      code: string;
+      address: string;
+    };
+    course: {
+      CName : string;
+      Duration : string;
+    };
+  };
   year: string;
-  courseName: string;
-  courseDuration: string;
-  centerName: string;
-  institueCode: string;
-  centerAddress: string;
-  iDate: string;
-  subjectName: string;
-  tfm: string;
-  pfm: string;
-  tm: string;
-  pm: string;
-  grandTotal: string;
-  percentage: string;
+  
+  marks: {
+    subject: string;
+    theoryMarks: number;
+    practicalMarks: number;
+    theoryFullMarks: number;
+    practicalFullMarks: number;
+  }[];
+  
+  percentage: number;
   grade: string;
-  result: string;
-}
+ 
+  remarks: string;
+  totalMarks: number;
+};
 
 async function makeCircularImage() {
   const inputPath = "files/temp.jpg"; // Replace with your square image
@@ -473,185 +484,160 @@ export async function fillId({
   console.log("PDF generated successfully: filled_id.pdf");
 }
 
-export async function fillMarksheet({
-  sName,
-  enrollNo,
-  swdName,
-  year,
-  courseName,
-  courseDuration,
-  centerName,
-  institueCode,
-  centerAddress,
-  iDate,
-  subjectName,
-  tfm,
-  pfm,
-  tm,
-  pm,
-  grandTotal,
-  percentage,
-  grade,
-  result,
-}: mtype) {
+export async function fillMarksheet(data: MarksheetData) {
   const existingPdfBytes = fs.readFileSync("files/marksheet.pdf");
   const pdfDoc = await PDFDocument.load(existingPdfBytes);
   const page = pdfDoc.getPages()[0];
   const pdfHeight = page.getHeight();
+  const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold); // Embed bold font
 
-  page.drawText(sName, {
+  // Student Information
+  page.drawText(data.sName, {
     x: 158,
     y: pdfHeight - 218,
     size: 13,
+    font: boldFont,
     color: rgb(0, 0, 0),
   });
-
-  page.drawText(enrollNo, {
+  page.drawText(data.Enrollmentno, {
     x: 487,
     y: pdfHeight - 218,
     size: 13,
+    font: boldFont,
     color: rgb(0, 0, 0),
   });
-
-  page.drawText(swdName, {
+  page.drawText(data.swdName, {
     x: 102,
     y: pdfHeight - 243,
     size: 13,
+    font: boldFont,
     color: rgb(0, 0, 0),
   });
-
-  page.drawText(year, {
+  page.drawText(data.year, {
     x: 415,
     y: pdfHeight - 243,
     size: 13,
+    font: boldFont,
     color: rgb(0, 0, 0),
   });
-
-  page.drawText(courseName, {
+  page.drawText(data.courseName, {
     x: 136,
     y: pdfHeight - 269,
     size: 13,
+    font: boldFont,
     color: rgb(0, 0, 0),
   });
-
-  page.drawText(courseDuration, {
+  page.drawText(data.courseDuration, {
     x: 500,
     y: pdfHeight - 269,
     size: 13,
+    font: boldFont,
     color: rgb(0, 0, 0),
   });
-
-  page.drawText(centerName, {
+  page.drawText(data.centerName, {
     x: 133,
     y: pdfHeight - 295,
     size: 13,
+    font: boldFont,
     color: rgb(0, 0, 0),
   });
-
-  page.drawText(institueCode, {
+  page.drawText(data.institueCode, {
     x: 480,
     y: pdfHeight - 295,
     size: 13,
+    font: boldFont,
     color: rgb(0, 0, 0),
   });
-
-  page.drawText(centerAddress, {
+  page.drawText(data.centerAddress, {
     x: 146,
     y: pdfHeight - 320,
     size: 13,
+    font: boldFont,
     color: rgb(0, 0, 0),
   });
-
-  page.drawText(iDate, {
+  page.drawText(data.iDate, {
     x: 470,
     y: pdfHeight - 320,
     size: 13,
+    font: boldFont,
     color: rgb(0, 0, 0),
   });
 
-  const subjects = [{ name: subjectName, tfm: tfm, pfm: pfm, tm: tm, pm: pm }];
+  // Subjects and Marks
+  let yPosition = pdfHeight - 410;
 
-  let yPosition = pdfHeight - 410; // Initial Y
-
-  subjects.forEach((subject, index) => {
-    page.drawText(subject.name, {
+  data.marks.forEach((subject) => {
+    page.drawText(subject.subject, {
       x: 60,
       y: yPosition,
       size: 15,
+      font: boldFont,
       color: rgb(0, 0, 0),
     });
-
-    page.drawText(subject.tfm.toString(), {
+    page.drawText(subject.theoryFullMarks.toString(), {
       x: 290,
       y: yPosition,
       size: 15,
+      font: boldFont,
       color: rgb(0, 0, 0),
     });
-
-    page.drawText(subject.pfm.toString(), {
+    page.drawText(subject.practicalFullMarks.toString(), {
       x: 355,
       y: yPosition,
       size: 15,
+      font: boldFont,
       color: rgb(0, 0, 0),
     });
-
-    page.drawText(subject.tm.toString(), {
+    page.drawText(subject.theoryMarks.toString(), {
       x: 430,
       y: yPosition,
       size: 15,
+      font: boldFont,
       color: rgb(0, 0, 0),
     });
-
-    page.drawText(subject.pm.toString(), {
+    page.drawText(subject.practicalMarks.toString(), {
       x: 495,
       y: yPosition,
       size: 15,
+      font: boldFont,
       color: rgb(0, 0, 0),
     });
 
     yPosition -= 30; // Move to the next row
   });
 
-  page.drawText(grandTotal, {
+  // Grand Total, Percentage, Grade, and Result
+  page.drawText(data.grandTotal.toString(), {
     x: 555,
     y: pdfHeight - 645,
     size: 15,
+    font: boldFont,
     color: rgb(0, 0, 0),
   });
-
-  page.drawText(percentage, {
+  page.drawText(data.percentage.toFixed(2) + "%", {
     x: 292,
     y: pdfHeight - 672,
     size: 15,
+    font: boldFont,
     color: rgb(0, 0, 0),
   });
-
-  page.drawText(grade, {
+  page.drawText(data.grade, {
     x: 560,
     y: pdfHeight - 672,
     size: 15,
+    font: boldFont,
     color: rgb(0, 0, 0),
   });
-
-  page.drawText(result, {
+  page.drawText(data.result, {
     x: 50,
     y: pdfHeight - 672,
     size: 15,
+    font: boldFont,
     color: rgb(0, 0, 0),
   });
 
+  // Save the PDF
   const pdfBytes = await pdfDoc.save();
-
-  // const params = {
-  //   Bucket: process.env.AWS_BUCKET_NAME,
-  //   Key: `marksheet/filled_marksheet_${Date.now()}.pdf`,
-  //   Body: pdfBytes,
-  //   ContentType: "application/pdf",
-  // };
-
-  // const command = new PutObjectCommand(params);
-  // await s3.send(command);
-
   fs.writeFileSync("filled_Marksheet.pdf", pdfBytes);
 
   console.log("PDF generated successfully: filled_marksheet.pdf");

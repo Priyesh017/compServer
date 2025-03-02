@@ -10,6 +10,7 @@ import {
   fillId,
   fillMarksheet,
   formatDateForJS,
+  MarksheetData,
 } from "../helper";
 
 export async function loginFunc(req: Request, res: Response) {
@@ -275,7 +276,8 @@ export async function generateId(req: Request, res: Response) {
 
 export async function generateMarksheet(req: Request, res: Response) {
   const { enrollmentNo } = req.body;
-  const marksheetData = await prisma.marks.findFirst({
+  
+  const md = await prisma.marks.findFirst({
     where: {
       EnrollmentNo: enrollmentNo,
     },
@@ -283,7 +285,6 @@ export async function generateMarksheet(req: Request, res: Response) {
       enrollment: {
         select: {
           name: true,
-          Enrollmentno: true,
           father: true,
           mother: true,
           dob: true,
@@ -304,9 +305,28 @@ export async function generateMarksheet(req: Request, res: Response) {
       },
     },
   });
-  // await fillMarksheet(marksheetData);
-  res.json({ ok: true, marksheetData });
+
+  if (md && md.enrollment.center && md.enrollment.course) {
+    // Ensure code and address are not null
+    const sanitizedData = {
+      ...md,
+      enrollment: {
+        ...md.enrollment,
+        center: {
+          ...md.enrollment.center,
+          code: md.enrollment.center.code ?? "N/A",
+          address: md.enrollment.center.address ?? "N/A",
+        },
+      },
+    };
+
+    await fillMarksheet(sanitizedData);
+    return res.json({ ok: true, md: sanitizedData });
+  } else {
+    return res.status(404).json({ error: "Marksheet not found" });
+  }
 }
+
 
 export async function exmformfillupDatafetch(req: Request, res: Response) {
   const { enrollmentNo } = req.body;
