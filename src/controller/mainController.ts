@@ -276,8 +276,8 @@ export async function generateId(req: Request, res: Response) {
 
 export async function generateMarksheet(req: Request, res: Response) {
   const { enrollmentNo } = req.body;
-  
-  const md = await prisma.marks.findFirst({
+
+  const md = (await prisma.marks.findFirst({
     where: {
       EnrollmentNo: enrollmentNo,
     },
@@ -304,29 +304,14 @@ export async function generateMarksheet(req: Request, res: Response) {
         },
       },
     },
-  });
+  })) as unknown as MarksheetData;
 
-  if (md && md.enrollment.center && md.enrollment.course) {
-    // Ensure code and address are not null
-    const sanitizedData = {
-      ...md,
-      enrollment: {
-        ...md.enrollment,
-        center: {
-          ...md.enrollment.center,
-          code: md.enrollment.center.code ?? "N/A",
-          address: md.enrollment.center.address ?? "N/A",
-        },
-      },
-    };
+  if (!md) return res.json({ ok: false });
 
-    await fillMarksheet(sanitizedData);
-    return res.json({ ok: true, md: sanitizedData });
-  } else {
-    return res.status(404).json({ error: "Marksheet not found" });
-  }
+  await fillMarksheet(md);
+
+  res.json({ ok: true });
 }
-
 
 export async function exmformfillupDatafetch(req: Request, res: Response) {
   const { enrollmentNo } = req.body;

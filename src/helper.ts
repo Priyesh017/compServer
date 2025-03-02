@@ -50,12 +50,12 @@ export type MarksheetData = {
       address: string;
     };
     course: {
-      CName : string;
-      Duration : string;
+      CName: string;
+      Duration: number;
     };
   };
   year: string;
-  
+
   marks: {
     subject: string;
     theoryMarks: number;
@@ -63,10 +63,10 @@ export type MarksheetData = {
     theoryFullMarks: number;
     practicalFullMarks: number;
   }[];
-  
+
   percentage: number;
   grade: string;
- 
+
   remarks: string;
   totalMarks: number;
 };
@@ -262,8 +262,6 @@ export async function fillCertificate({
 
   console.log("PDF generated successfully: filled_certificate.pdf");
 }
-
-// {enrollNo,stuName,fName,courseCode,atiCode,ecCode}:ftype
 
 export async function filladmit() {
   const existingPdfBytes = fs.readFileSync("files/admit.pdf");
