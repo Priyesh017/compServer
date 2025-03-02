@@ -306,7 +306,10 @@ export async function generateMarksheet(req: Request, res: Response) {
     },
   })) as unknown as MarksheetData;
 
-  if (!md) return res.json({ ok: false });
+  if (!md) {
+    res.json({ ok: false });
+    return;
+  }
 
   await fillMarksheet(md);
 
@@ -548,7 +551,7 @@ export async function FetchAllEnquiry(req: Request, res: Response) {
     where: {},
   });
 
-  res.json({ ok: true, data });
+  res.json({ data });
 }
 export async function examFormFillup(req: Request, res: Response) {
   const { enrollmentNo, ATI_CODE, ExamCenterCode, lprn } = req.body;
