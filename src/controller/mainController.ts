@@ -274,9 +274,39 @@ export async function generateId(req: Request, res: Response) {
 }
 
 export async function generateMarksheet(req: Request, res: Response) {
-  // fillMarksheet().catch((err) => console.error(err));
-  await fillMarksheet(req.body);
-  // res.json({ data: "kuch hua haiiii" });
+  const enrollmentNo = req.body;
+  const marksheetData = await prisma.marks.findFirst({
+    where: {
+      EnrollmentNo: enrollmentNo,
+    },
+    include: {
+      enrollment: {
+        select: {
+          name: true,
+          Enrollmentno: true,
+          father: true,
+          mother: true,
+          dob: true,
+        },
+        include: {
+          center: {
+            select: {
+              Centername: true,
+              code: true,
+              address: true,
+            },
+          },
+          course: {
+            select: {
+              CName: true,
+              Duration: true,
+            },
+          },
+        },
+      },
+    },
+  });
+  // await fillMarksheet(marksheetData);
   res.json({ ok: true });
 }
 
@@ -508,7 +538,7 @@ export async function TakeEnquiry(req: Request, res: Response) {
     },
   });
 
-  res.json({ data });
+  res.json({ ok: true, data });
 }
 export async function FetchAllEnquiry(req: Request, res: Response) {
   const data = await prisma.enquiry.findMany({
