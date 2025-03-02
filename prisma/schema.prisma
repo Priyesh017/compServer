@@ -15,7 +15,7 @@ enum Role {
 model User {
   id       Int      @id @default(autoincrement())
   email    String   @unique
-  name     String?
+  name     String
   role     Role     @default(CENTER)
   password String
   Center   Center[] // central admin onek center manage korte parbe
@@ -29,8 +29,8 @@ model Center {
   Student    Enrollment[]
   admin      User?        @relation(fields: [adminid], references: [id], onDelete: Cascade)
   adminid    Int
-  address    String?
-  code       String?
+  address    String
+  code       String
 }
 
 model Enrollment {
@@ -77,16 +77,13 @@ model Course {
 }
 
 model Amount {
-  id Int @id @default(autoincrement())
-
+  id                   Int        @id @default(autoincrement())
   TotalPaid            Int
   amountRemain         Int
-  Approval             Boolean
-  lastPaymentRecieptno String
-
-  enrollment   Enrollment @relation(fields: [EnrollmentNo], references: [Enrollmentno])
-  EnrollmentNo String     @unique
-  createdAt    DateTime   @default(now())
+  lastPaymentRecieptno String?
+  enrollment           Enrollment @relation(fields: [EnrollmentNo], references: [Enrollmentno])
+  EnrollmentNo         String     @unique
+  createdAt            DateTime   @default(now())
 }
 
 model ExamForm {
@@ -120,8 +117,9 @@ enum Remark {
 }
 
 model Enquiry {
-  id      Int    @id @default(autoincrement())
-  name    String
-  email   String
-  message String
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String
+  message   String
+  createdAt DateTime @default(now())
 }

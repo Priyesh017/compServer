@@ -145,6 +145,7 @@ export async function createEnrollment(req: Request, res: Response) {
     enrollmentNo: Enrollmentno,
     eduqualification,
     idno: IdCardNo,
+    amountPaid,
   } = req.body;
 
   const dobUpdated = new Date(dob);
@@ -174,6 +175,7 @@ export async function createEnrollment(req: Request, res: Response) {
       },
     },
   });
+
   res.json({ success: "true", data });
 }
 
@@ -206,7 +208,7 @@ export async function deActivateEnrollment(req: Request, res: Response) {
 }
 
 export async function createCenter(req: Request, res: Response) {
-  const { locationX, locationY, Centername, adminId, address } = req.body;
+  const { locationX, locationY, Centername, adminId, address, code } = req.body;
 
   // Ensure locationX and locationY are converted to numbers
   const center = await prisma.center.create({
@@ -218,6 +220,7 @@ export async function createCenter(req: Request, res: Response) {
         connect: { id: parseInt(adminId) }, // Ensure adminId is a number
       },
       address,
+      code,
     },
   });
 
@@ -244,6 +247,7 @@ export async function AllEnrollments(req: Request, res: Response) {
         name: true,
         createdAt: true,
         Enrollmentno: true,
+        id: true,
       },
     });
 
@@ -270,9 +274,39 @@ export async function generateId(req: Request, res: Response) {
 }
 
 export async function generateMarksheet(req: Request, res: Response) {
-  // fillMarksheet().catch((err) => console.error(err));
-  await fillMarksheet(req.body);
-  // res.json({ data: "kuch hua haiiii" });
+  const enrollmentNo = req.body;
+  const marksheetData = await prisma.marks.findFirst({
+    where: {
+      EnrollmentNo: enrollmentNo,
+    },
+    include: {
+      enrollment: {
+        select: {
+          name: true,
+          Enrollmentno: true,
+          father: true,
+          mother: true,
+          dob: true,
+        },
+        include: {
+          center: {
+            select: {
+              Centername: true,
+              code: true,
+              address: true,
+            },
+          },
+          course: {
+            select: {
+              CName: true,
+              Duration: true,
+            },
+          },
+        },
+      },
+    },
+  });
+  // await fillMarksheet(marksheetData);
   res.json({ ok: true });
 }
 
@@ -284,11 +318,6 @@ export async function exmformfillupDatafetch(req: Request, res: Response) {
       Enrollmentno: enrollmentNo,
     },
     include: {
-      amount: {
-        select: {
-          lastPaymentRecieptno: true,
-        },
-      },
       center: {
         select: {
           Centername: true,
@@ -509,17 +538,32 @@ export async function TakeEnquiry(req: Request, res: Response) {
     },
   });
 
-  res.json({ data });
+  res.json({ ok: true, data });
 }
+export async function FetchAllEnquiry(req: Request, res: Response) {
+  const data = await prisma.enquiry.findMany({
+    where: {},
+  });
 
+  res.json({ ok: true, data });
+}
 export async function examFormFillup(req: Request, res: Response) {
-  const { enrollmentNo, ATI_CODE, ExamCenterCode } = req.body;
+  const { enrollmentNo, ATI_CODE, ExamCenterCode, lprn } = req.body;
 
   const data = await prisma.examForm.create({
     data: {
       EnrollmentNo: enrollmentNo,
       ATI_CODE,
       ExamCenterCode,
+    },
+  });
+
+  await prisma.amount.update({
+    where: {
+      EnrollmentNo: enrollmentNo,
+    },
+    data: {
+      lastPaymentRecieptno: lprn,
     },
   });
 
@@ -531,7 +575,7 @@ export async function amountFetch(req: Request, res: Response) {
 
   const data = await prisma.enrollment.findMany({
     where: {
-      centerid: id,
+      centerid: 1,
     },
     include: {
       amount: {
@@ -540,10 +584,44 @@ export async function amountFetch(req: Request, res: Response) {
           TotalPaid: true,
         },
       },
+      course: {
+        select: {
+          price: true,
+        },
+      },
     },
   });
 
-  res.json({ data });
+  res.json({ ok: true, data });
+}
+
+export async function amountEdit(req: Request, res: Response) {
+  const { EnrollmentNo, tp, ar } = req.body;
+  const TotalPaid = parseInt(tp);
+  const amountRemain = parseInt(ar);
+
+  const data = await prisma.amount.upsert({
+    where: {
+      EnrollmentNo,
+    },
+    create: {
+      TotalPaid,
+      amountRemain,
+      enrollment: {
+        connect: {
+          Enrollmentno: EnrollmentNo,
+        },
+      },
+    },
+    update: {
+      TotalPaid: {
+        increment: TotalPaid,
+      },
+      amountRemain,
+    },
+  });
+
+  res.json({ ok: true, data });
 }
 
 // enrollment activated on thakle id card download korte parbe
