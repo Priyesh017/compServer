@@ -274,7 +274,7 @@ export async function generateId(req: Request, res: Response) {
 }
 
 export async function generateMarksheet(req: Request, res: Response) {
-  const enrollmentNo = req.body;
+  const { enrollmentNo } = req.body;
   const marksheetData = await prisma.marks.findFirst({
     where: {
       EnrollmentNo: enrollmentNo,
@@ -307,7 +307,7 @@ export async function generateMarksheet(req: Request, res: Response) {
     },
   });
   // await fillMarksheet(marksheetData);
-  res.json({ ok: true });
+  res.json({ ok: true, marksheetData });
 }
 
 export async function exmformfillupDatafetch(req: Request, res: Response) {
