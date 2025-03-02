@@ -5,7 +5,6 @@ import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 import QRCode from "qrcode";
 import sharp from "sharp";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
-import { s3 } from "./client";
 
 interface ftype {
   enrollNo: string;
