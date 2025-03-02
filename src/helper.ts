@@ -1,7 +1,7 @@
 import { CookieOptions, Response } from "express";
 import jwt from "jsonwebtoken";
 import fs from "fs";
-import { PDFDocument, rgb } from "pdf-lib";
+import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 import QRCode from "qrcode";
 import sharp from "sharp";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
@@ -500,108 +500,116 @@ export async function fillMarksheet({
   const pdfHeight = page.getHeight();
 
   page.drawText(sName, {
-    x: 156,
+    x: 158,
     y: pdfHeight - 218,
-    size: 15,
+    size: 13,
     color: rgb(0, 0, 0),
   });
 
   page.drawText(enrollNo, {
-    x: 483,
+    x: 487,
     y: pdfHeight - 218,
-    size: 15,
+    size: 13,
     color: rgb(0, 0, 0),
   });
 
   page.drawText(swdName, {
-    x: 100,
+    x: 102,
     y: pdfHeight - 243,
-    size: 15,
+    size: 13,
     color: rgb(0, 0, 0),
   });
 
   page.drawText(year, {
     x: 415,
     y: pdfHeight - 243,
-    size: 15,
+    size: 13,
     color: rgb(0, 0, 0),
   });
 
   page.drawText(courseName, {
-    x: 135,
+    x: 136,
     y: pdfHeight - 269,
-    size: 15,
+    size: 13,
     color: rgb(0, 0, 0),
   });
 
   page.drawText(courseDuration, {
     x: 500,
     y: pdfHeight - 269,
-    size: 15,
+    size: 13,
     color: rgb(0, 0, 0),
   });
 
   page.drawText(centerName, {
-    x: 132,
+    x: 133,
     y: pdfHeight - 295,
-    size: 15,
+    size: 13,
     color: rgb(0, 0, 0),
   });
 
   page.drawText(institueCode, {
     x: 480,
     y: pdfHeight - 295,
-    size: 15,
+    size: 13,
     color: rgb(0, 0, 0),
   });
 
   page.drawText(centerAddress, {
     x: 146,
     y: pdfHeight - 320,
-    size: 15,
+    size: 13,
     color: rgb(0, 0, 0),
   });
 
   page.drawText(iDate, {
     x: 470,
     y: pdfHeight - 320,
-    size: 15,
+    size: 13,
     color: rgb(0, 0, 0),
   });
 
-  page.drawText(subjectName, {
-    x: 60,
-    y: pdfHeight - 410,
-    size: 15,
-    color: rgb(0, 0, 0),
-  });
+  const subjects = [{ name: subjectName, tfm: tfm, pfm: pfm, tm: tm, pm: pm }];
 
-  page.drawText(tfm, {
-    x: 290,
-    y: pdfHeight - 410,
-    size: 15,
-    color: rgb(0, 0, 0),
-  });
+  let yPosition = pdfHeight - 410; // Initial Y
 
-  page.drawText(pfm, {
-    x: 355,
-    y: pdfHeight - 410,
-    size: 15,
-    color: rgb(0, 0, 0),
-  });
+  subjects.forEach((subject, index) => {
+    page.drawText(subject.name, {
+      x: 60,
+      y: yPosition,
+      size: 15,
+      color: rgb(0, 0, 0),
+    });
 
-  page.drawText(tm, {
-    x: 430,
-    y: pdfHeight - 410,
-    size: 15,
-    color: rgb(0, 0, 0),
-  });
+    page.drawText(subject.tfm.toString(), {
+      x: 290,
+      y: yPosition,
+      size: 15,
+      color: rgb(0, 0, 0),
+    });
 
-  page.drawText(pm, {
-    x: 495,
-    y: pdfHeight - 410,
-    size: 15,
-    color: rgb(0, 0, 0),
+    page.drawText(subject.pfm.toString(), {
+      x: 355,
+      y: yPosition,
+      size: 15,
+      color: rgb(0, 0, 0),
+    });
+
+    page.drawText(subject.tm.toString(), {
+      x: 430,
+      y: yPosition,
+      size: 15,
+      color: rgb(0, 0, 0),
+    });
+
+    page.drawText(subject.pm.toString(), {
+      x: 495,
+      y: yPosition,
+      size: 15,
+      color: rgb(0, 0, 0),
+    });
+
+    yPosition -= 30; // Move to the next row
   });
 
   page.drawText(grandTotal, {
