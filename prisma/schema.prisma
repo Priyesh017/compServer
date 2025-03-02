@@ -57,7 +57,7 @@ model Enrollment {
   marks          Marks?
   amount         Amount?
 
-  course   Course? @relation(fields: [courseId], references: [id])
+  course   Course @relation(fields: [courseId], references: [id])
   courseId Int
 
   center    Center   @relation(fields: [centerid], references: [id])
