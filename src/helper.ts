@@ -507,127 +507,127 @@ export async function fillMarksheet({
   });
 
   page.drawText(enrollNo, {
-    x: 156,
-    y: pdfHeight - 243,
+    x: 483,
+    y: pdfHeight - 218,
     size: 15,
     color: rgb(0, 0, 0),
   });
 
   page.drawText(swdName, {
-    x: 156,
-    y: pdfHeight - 269,
+    x: 100,
+    y: pdfHeight - 243,
     size: 15,
     color: rgb(0, 0, 0),
   });
 
   page.drawText(year, {
-    x: 156,
-    y: pdfHeight - 295,
+    x: 415,
+    y: pdfHeight - 243,
     size: 15,
     color: rgb(0, 0, 0),
   });
 
   page.drawText(courseName, {
-    x: 156,
-    y: pdfHeight - 320,
+    x: 135,
+    y: pdfHeight - 269,
     size: 15,
     color: rgb(0, 0, 0),
   });
 
   page.drawText(courseDuration, {
-    x: 156,
-    y: pdfHeight - 320,
+    x: 500,
+    y: pdfHeight - 269,
     size: 15,
     color: rgb(0, 0, 0),
   });
 
   page.drawText(centerName, {
-    x: 156,
-    y: pdfHeight - 320,
+    x: 132,
+    y: pdfHeight - 295,
     size: 15,
     color: rgb(0, 0, 0),
   });
 
   page.drawText(institueCode, {
-    x: 156,
-    y: pdfHeight - 320,
+    x: 480,
+    y: pdfHeight - 295,
     size: 15,
     color: rgb(0, 0, 0),
   });
 
   page.drawText(centerAddress, {
-    x: 156,
+    x: 146,
     y: pdfHeight - 320,
     size: 15,
     color: rgb(0, 0, 0),
   });
 
   page.drawText(iDate, {
-    x: 156,
+    x: 470,
     y: pdfHeight - 320,
     size: 15,
     color: rgb(0, 0, 0),
   });
 
   page.drawText(subjectName, {
-    x: 156,
-    y: pdfHeight - 320,
+    x: 60,
+    y: pdfHeight - 410,
     size: 15,
     color: rgb(0, 0, 0),
   });
 
   page.drawText(tfm, {
-    x: 156,
-    y: pdfHeight - 320,
+    x: 290,
+    y: pdfHeight - 410,
     size: 15,
     color: rgb(0, 0, 0),
   });
 
   page.drawText(pfm, {
-    x: 156,
-    y: pdfHeight - 320,
+    x: 355,
+    y: pdfHeight - 410,
     size: 15,
     color: rgb(0, 0, 0),
   });
 
   page.drawText(tm, {
-    x: 156,
-    y: pdfHeight - 320,
+    x: 430,
+    y: pdfHeight - 410,
     size: 15,
     color: rgb(0, 0, 0),
   });
 
   page.drawText(pm, {
-    x: 156,
-    y: pdfHeight - 320,
+    x: 495,
+    y: pdfHeight - 410,
     size: 15,
     color: rgb(0, 0, 0),
   });
 
   page.drawText(grandTotal, {
-    x: 156,
-    y: pdfHeight - 320,
+    x: 555,
+    y: pdfHeight - 645,
     size: 15,
     color: rgb(0, 0, 0),
   });
 
   page.drawText(percentage, {
-    x: 156,
-    y: pdfHeight - 320,
+    x: 292,
+    y: pdfHeight - 672,
     size: 15,
     color: rgb(0, 0, 0),
   });
 
   page.drawText(grade, {
-    x: 156,
-    y: pdfHeight - 320,
+    x: 560,
+    y: pdfHeight - 672,
     size: 15,
     color: rgb(0, 0, 0),
   });
 
   page.drawText(result, {
-    x: 156,
-    y: pdfHeight - 320,
+    x: 50,
+    y: pdfHeight - 672,
     size: 15,
     color: rgb(0, 0, 0),
   });
