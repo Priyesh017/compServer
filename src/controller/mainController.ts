@@ -145,6 +145,7 @@ export async function createEnrollment(req: Request, res: Response) {
     enrollmentNo: Enrollmentno,
     eduqualification,
     idno: IdCardNo,
+    amountPaid,
   } = req.body;
 
   const dobUpdated = new Date(dob);
@@ -174,6 +175,7 @@ export async function createEnrollment(req: Request, res: Response) {
       },
     },
   });
+
   res.json({ success: "true", data });
 }
 
@@ -245,6 +247,7 @@ export async function AllEnrollments(req: Request, res: Response) {
         name: true,
         createdAt: true,
         Enrollmentno: true,
+        id: true,
       },
     });
 
@@ -285,11 +288,6 @@ export async function exmformfillupDatafetch(req: Request, res: Response) {
       Enrollmentno: enrollmentNo,
     },
     include: {
-      amount: {
-        select: {
-          lastPaymentRecieptno: true,
-        },
-      },
       center: {
         select: {
           Centername: true,
@@ -512,15 +510,30 @@ export async function TakeEnquiry(req: Request, res: Response) {
 
   res.json({ data });
 }
+export async function FetchAllEnquiry(req: Request, res: Response) {
+  const data = await prisma.enquiry.findMany({
+    where: {},
+  });
 
+  res.json({ ok: true, data });
+}
 export async function examFormFillup(req: Request, res: Response) {
-  const { enrollmentNo, ATI_CODE, ExamCenterCode } = req.body;
+  const { enrollmentNo, ATI_CODE, ExamCenterCode, lprn } = req.body;
 
   const data = await prisma.examForm.create({
     data: {
       EnrollmentNo: enrollmentNo,
       ATI_CODE,
       ExamCenterCode,
+    },
+  });
+
+  await prisma.amount.update({
+    where: {
+      EnrollmentNo: enrollmentNo,
+    },
+    data: {
+      lastPaymentRecieptno: lprn,
     },
   });
 
@@ -532,7 +545,7 @@ export async function amountFetch(req: Request, res: Response) {
 
   const data = await prisma.enrollment.findMany({
     where: {
-      centerid: id,
+      centerid: 1,
     },
     include: {
       amount: {
@@ -541,15 +554,46 @@ export async function amountFetch(req: Request, res: Response) {
           TotalPaid: true,
         },
       },
+      course: {
+        select: {
+          price: true,
+        },
+      },
     },
   });
 
-  res.json({ data });
+  res.json({ ok: true, data });
 }
 
 export async function amountEdit(req: Request, res: Response) {
-  const {} = req.body;
+  const { EnrollmentNo, tp, ar } = req.body;
+  const TotalPaid = parseInt(tp);
+  const amountRemain = parseInt(ar);
+
+  const data = await prisma.amount.upsert({
+    where: {
+      EnrollmentNo,
+    },
+    create: {
+      TotalPaid,
+      amountRemain,
+      enrollment: {
+        connect: {
+          Enrollmentno: EnrollmentNo,
+        },
+      },
+    },
+    update: {
+      TotalPaid: {
+        increment: TotalPaid,
+      },
+      amountRemain,
+    },
+  });
+
+  res.json({ ok: true, data });
 }
+
 // enrollment activated on thakle id card download korte parbe
 // examform fillup verified thakle admit download kora jabe
 // marksheet e pass thakle certificate download kora jabe and always result download hobe

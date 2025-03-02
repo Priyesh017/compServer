@@ -27,6 +27,8 @@ import {
   exmformApprove,
   exmmarksDisApprove,
   amountFetch,
+  FetchAllEnquiry,
+  amountEdit,
 } from "../controller/mainController";
 import { ErrorHandler } from "../errhandling";
 
@@ -63,5 +65,7 @@ router.route("/examFormFillup").post(ErrorHandler(examFormFillup));
 router.route("/exmformApprove").post(ErrorHandler(exmformApprove));
 router.route("/exmmarksDisApprove").post(ErrorHandler(exmmarksDisApprove));
 router.route("/amountFetch").post(ErrorHandler(amountFetch));
+router.route("/FetchAllEnquiry").get(ErrorHandler(FetchAllEnquiry));
+router.route("/amountEdit").post(ErrorHandler(amountEdit));
 
 export default router;
