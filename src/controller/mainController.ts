@@ -229,37 +229,33 @@ export async function createCenter(req: Request, res: Response) {
 }
 
 export async function AllEnrollments(req: Request, res: Response) {
-  // by admin
-  const page = parseInt(req.query.page as string) || 1; // Default to page 1
-  const limit = parseInt(req.query.limit as string) || 10; // Default limit 10
+  const page = parseInt(req.query.page as string) || 1;
+  const limit = parseInt(req.query.limit as string) || 10;
+  const skip = (page - 1) * limit;
 
-  const skip = (page - 1) * limit; // Calculate offset
-  //FIXME  ONLY sei center er id diye
-  try {
-    const enrollments = await prisma.enrollment.findMany({
-      skip,
-      take: limit,
-      select: {
-        admitLink: true,
-        certificateLink: true,
-        dob: true,
-        idCardLink: true,
-        marksheetLink: true,
-        name: true,
-        createdAt: true,
-        Enrollmentno: true,
-        id: true,
-      },
-    });
+  const enrollments = await prisma.enrollment.findMany({
+    skip,
+    take: limit,
+    select: {
+      admitLink: true,
+      certificateLink: true,
+      dob: true,
+      idCardLink: true,
+      marksheetLink: true,
+      name: true,
+      createdAt: true,
+      Enrollmentno: true,
+      id: true,
+      activated: true, // Ensure activated field is included
+    },
+  });
 
-    res.json(enrollments);
-  } catch (error) {
-    res.status(500).json({ error: "Failed to fetch enrollments" });
-  }
+  const total = await prisma.enrollment.count(); // Get total count for pagination
+  res.json({ enrollments, total });
 }
 
 export async function generateCertificate(req: Request, res: Response) {
-  await fillCertificate(req.body);
+  await fillCertificate(req.body.data);
   res.json({ ok: true });
 }
 
@@ -269,14 +265,45 @@ export async function generateadmit(req: Request, res: Response) {
 }
 
 export async function generateId(req: Request, res: Response) {
-  await fillId(req.body);
+  const { Enrollmentno } = req.body;
+
+  const data = await prisma.enrollment.findFirst({
+    where: {
+      Enrollmentno,
+    },
+    select: {
+      address: true,
+      center: {
+        select: {
+          Centername: true,
+        },
+      },
+      IdCardNo: true,
+      Enrollmentno: true,
+      name: true,
+      course: {
+        select: {
+          CName: true,
+        },
+      },
+    },
+  });
+
+  if (!data) {
+    res.json({ ok: false });
+    return;
+  }
+
+  await fillId(data);
 
   res.json({ ok: true });
 }
 
 export async function generateMarksheet(req: Request, res: Response) {
-  const { enrollmentNo } = req.body;
+  const { data } = req.body;
+  const enrollmentNo = data.EnrollmentNo;
 
+  console.log(enrollmentNo);
   const md = (await prisma.marks.findFirst({
     where: {
       EnrollmentNo: enrollmentNo,
@@ -305,7 +332,7 @@ export async function generateMarksheet(req: Request, res: Response) {
       },
     },
   })) as unknown as MarksheetData;
-
+  console.log(JSON.stringify(md));
   if (!md) {
     res.json({ ok: false });
     return;
@@ -515,6 +542,7 @@ export async function marksheetfetch(req: Request, res: Response) {
           course: {
             select: {
               CName: true,
+              Duration: true,
             },
           },
           center: {

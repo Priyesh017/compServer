@@ -38,14 +38,15 @@ app.get("/generate-presigned-url", async (req, res) => {
   try {
     const fileName = req.query.fileName as string;
     const fileType = req.query.fileType as string;
-    const catagory = req.query.category as string;
-    const Key = `images/${catagory}/-${fileName}`;
-    console.log(fileName, fileType, catagory);
+    const category = req.query.category as string;
+
+    const Key = `images/${category}/${fileName}`;
+    console.log(Key);
     const command = new PutObjectCommand({
       Bucket: process.env.AWS_BUCKET_NAME,
       Key: Key,
       ContentType: fileType,
-      ACL: "public-read",
+      // ACL: "public-read",
     });
 
     const url = await getSignedUrl(s3, command, { expiresIn: 60 });

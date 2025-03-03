@@ -4,7 +4,6 @@ import fs from "fs";
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 import QRCode from "qrcode";
 import sharp from "sharp";
-import { PutObjectCommand } from "@aws-sdk/client-s3";
 
 interface ftype {
   enrollNo: string;
@@ -16,25 +15,48 @@ interface ftype {
 }
 
 interface dtype {
-  sName: string;
-  cName: string;
-  idCardNo: string;
-  enrollmentNo: string;
+  name: string;
+  center: {
+    Centername: string;
+  };
   address: string;
-  centerName: string;
+  course: {
+    CName: string;
+  };
+  Enrollmentno: string;
+  IdCardNo: string;
 }
-interface ctype {
-  sName: string;
-  sdwName: string;
-  courseName: string;
-  duration: string;
-  year: string;
+
+interface iData {
+  id: number;
+  marks: {
+    subject: string;
+    theoryMarks: string;
+    practicalMarks: string;
+    theoryFullMarks: string;
+    practicalFullMarks: string;
+  }[];
+  remarks: string;
+  EnrollmentNo: string;
   grade: string;
-  enrollNo: string;
-  centerName: string;
-  iDate: string;
-  Branch: string;
-  GrandTotal: string;
+  totalMarks: number;
+  percentage: number;
+  verified: boolean;
+  createdAt: string;
+  year: string;
+  enrollment: {
+    name: string;
+    father: string;
+    dob: string;
+    course: {
+      CName: string;
+      Duration: number;
+    };
+    center: {
+      Centername: string;
+      address: string;
+    };
+  };
 }
 
 export type MarksheetData = {
@@ -139,27 +161,25 @@ const adjustCenteredTextPosition = (
   return { x, y, size: fontSize };
 };
 export async function fillCertificate({
-  sName,
-  sdwName,
-  courseName,
-  duration,
-  year,
   grade,
-  enrollNo,
-  centerName,
-  iDate,
-  Branch,
-  GrandTotal,
-}: ctype) {
-  // it will take id parameter
-  // Load the existing PDF
+  totalMarks,
+  year,
+  enrollment: {
+    name,
+    father,
+    course: { CName, Duration },
+    center: { Centername },
+  },
+  EnrollmentNo,
+}: iData) {
   const studentData = {
-    Name: sName,
-    EnrollmentNo: enrollNo,
-    CourseName: courseName,
-    Branch,
-    GrandTotal,
+    Name: name,
+    EnrollmentNo,
+    CourseName: CName,
+    Centername,
+    totalMarks,
   };
+  console.log("first");
   const qrText = JSON.stringify(studentData);
   const qrCodeBuffer = await QRCode.toBuffer(qrText);
 
@@ -176,7 +196,6 @@ export async function fillCertificate({
   const { width, height } = qrImage.scale(0.3); // Adjust QR size
   const image = await pdfDoc.embedJpg(imageBytes);
   // Position QR Code (adjust x, y as needed)
-  console.log(width);
 
   page.drawImage(qrImage, {
     x: 50, // Adjust X position
@@ -184,7 +203,7 @@ export async function fillCertificate({
     width,
     height,
   });
-
+  console.log("1");
   // Draw the image at a specific position (x, y)
   page.drawImage(image, {
     x: 475, // Adjust X position
@@ -200,30 +219,33 @@ export async function fillCertificate({
     size: 12,
     color: rgb(0, 0, 0),
   });
-  page.drawText(sName, {
+  page.drawText(name, {
     x: 231,
     y: pdfHeight - 265,
     size: fontSize,
     color: rgb(0, 0, 0),
   });
-  page.drawText(sdwName, {
+  console.log("2");
+  page.drawText(father, {
     x: 248,
     y: pdfHeight - 291,
     size: fontSize,
     color: rgb(0, 0, 0),
   });
-  page.drawText(courseName, {
+  page.drawText(CName, {
     x: 153,
     y: pdfHeight - 341,
     size: fontSize,
     color: rgb(0, 0, 0),
   });
-  page.drawText(duration, {
+  console.log("22");
+  page.drawText(`${Duration.toString()} months`, {
     x: 145,
     y: pdfHeight - 367,
     size: fontSize,
     color: rgb(0, 0, 0),
   });
+  console.log("3");
   page.drawText(year, {
     x: 472,
     y: pdfHeight - 367,
@@ -236,25 +258,26 @@ export async function fillCertificate({
     size: fontSize,
     color: rgb(0, 0, 0),
   });
-  page.drawText(enrollNo, {
+  page.drawText(EnrollmentNo, {
     x: 483,
     y: pdfHeight - 392,
     size: 15,
     color: rgb(0, 0, 0),
   });
-  page.drawText(centerName, {
+  page.drawText(Centername, {
     x: 218,
     y: pdfHeight - 417,
     size: 16,
     color: rgb(0, 0, 0),
   });
-  page.drawText(iDate, {
+  console.log("first2");
+  page.drawText(new Date(Date.now()).toLocaleDateString(), {
     x: 249,
     y: pdfHeight - 445,
     size: fontSize,
     color: rgb(0, 0, 0),
   });
-
+  console.log("first3");
   // Serialize the document and write it to a file
   const pdfBytes = await pdfDoc.save();
   fs.writeFileSync("filled_certificate.pdf", pdfBytes);
@@ -378,12 +401,12 @@ export async function filladmit() {
 }
 
 export async function fillId({
-  sName,
-  cName,
-  idCardNo,
-  enrollmentNo,
+  Enrollmentno,
+  IdCardNo,
   address,
-  centerName,
+  center: { Centername },
+  course: { CName },
+  name,
 }: dtype) {
   const existingPdfBytes = fs.readFileSync("files/id.pdf");
   const pdfDoc = await PDFDocument.load(existingPdfBytes);
@@ -395,42 +418,42 @@ export async function fillId({
   const imageBytes = fs.readFileSync("circle.png");
 
   const sNamePosition = adjustCenteredTextPosition(
-    sName,
+    name,
     pdfWidth,
     pdfHeight,
     940,
     80
   );
   const cNamePosition = adjustCenteredTextPosition(
-    cName,
+    CName,
     pdfWidth,
     pdfHeight,
     1020,
     60
   );
 
-  page.drawText(sName, {
+  page.drawText(name, {
     x: sNamePosition.x,
     y: sNamePosition.y,
     size: sNamePosition.size,
     color: rgb(0, 0, 0),
   });
 
-  page.drawText(cName, {
+  page.drawText(CName, {
     x: cNamePosition.x,
     y: cNamePosition.y,
     size: cNamePosition.size,
     color: rgb(0, 1, 0),
   });
 
-  page.drawText(`ID NO: ${idCardNo}`, {
+  page.drawText(`ID NO: ${IdCardNo}`, {
     x: 80,
     y: pdfHeight - 1100,
     size: 60,
     color: rgb(0, 0, 0),
   });
 
-  page.drawText(`ENROLLMENT: ${enrollmentNo}`, {
+  page.drawText(`ENROLLMENT: ${Enrollmentno}`, {
     x: 70,
     y: pdfHeight - 1180,
     size: 60,
@@ -444,7 +467,7 @@ export async function fillId({
     color: rgb(0, 0, 0),
   });
 
-  page.drawText(`CENTER: ${centerName}`, {
+  page.drawText(`CENTER: ${Centername}`, {
     x: 70,
     y: pdfHeight - 1340,
     size: 60,
