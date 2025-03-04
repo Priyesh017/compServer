@@ -124,7 +124,7 @@ export const formatDateForJS = (date: string) => {
 };
 
 export const accessTokenCookieOptions: CookieOptions = {
-  maxAge: 900000 * 4, // 15 mins
+  maxAge: 1000 * 60 * 20 * 6,
   httpOnly: true,
   sameSite: "none",
   secure: true,
@@ -141,6 +141,7 @@ export const Cookiehelper = (res: Response, user: any) => {
     .status(200)
     .json({ message: "Login successful", user: userWithoutPassword });
 };
+
 const adjustCenteredTextPosition = (
   text: string,
   pdfWidth: number,

@@ -1,11 +1,12 @@
 import { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
+import { prisma } from "./client";
 
-export interface iuserWithoutPassword {
+interface iuserWithoutPassword {
   id: string;
   email: string;
   name: string;
-  role: "admin" | "center";
+  role: "ADMIN" | "CENTER";
 }
 
 export const adminAuthCheckFn = (
@@ -24,13 +25,13 @@ export const adminAuthCheckFn = (
     accessToken,
     process.env.TOKEN_SECRET!
   ) as iuserWithoutPassword;
-  if (user.role === "admin") {
+  if (user.role === "ADMIN") {
     req.myProp = user.id;
     next();
   } else res.json({ message: "not admin user" });
 };
 
-export const centerAuthCheckFn = (
+export const centerAuthCheckFn = async (
   req: Request,
   res: Response,
   next: NextFunction
@@ -46,8 +47,27 @@ export const centerAuthCheckFn = (
     accessToken,
     process.env.TOKEN_SECRET!
   ) as iuserWithoutPassword;
-  if (user.role === "center") {
+  if (user.role === "CENTER") {
     req.myProp = user.id;
+
+    const centerId = await prisma.center.findFirst({
+      where: {
+        adminid: parseInt(user.id),
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!centerId) {
+      res.json({ message: "center not found for this admin" });
+      return;
+    }
+    req.centerId = centerId.id;
+
     next();
-  } else res.json({ message: "not center admin user" });
+  } else {
+    res.json({ message: "not center admin user" });
+    return;
+  }
 };

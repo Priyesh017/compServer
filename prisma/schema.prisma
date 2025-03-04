@@ -18,7 +18,7 @@ model User {
   name     String
   role     Role     @default(CENTER)
   password String
-  Center   Center[] // central admin onek center manage korte parbe
+  Center   Center[] @relation("CenterAdmin")
 }
 
 model Center {
@@ -27,7 +27,7 @@ model Center {
   locationX  Float
   locationY  Float
   Student    Enrollment[]
-  admin      User?        @relation(fields: [adminid], references: [id], onDelete: Cascade)
+  admin      User         @relation("CenterAdmin", fields: [adminid], references: [id], onDelete: Cascade)
   adminid    Int
   address    String
   code       String

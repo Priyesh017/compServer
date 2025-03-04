@@ -93,7 +93,7 @@ export async function loginCheckFunc(req: Request, res: Response) {
       accessToken,
       process.env.TOKEN_SECRET!
     ) as jwt.JwtPayload & { eno?: string };
-
+    console.log(JSON.stringify(user));
     if (user.eno) {
       const data = await prisma.enrollment.findFirst({
         where: {
@@ -146,10 +146,10 @@ export async function createEnrollment(req: Request, res: Response) {
     enrollmentNo: Enrollmentno,
     eduqualification,
     idno: IdCardNo,
-    amountPaid,
   } = req.body;
 
   const dobUpdated = new Date(dob);
+  const centerid = req.centerId!;
 
   const data = await prisma.enrollment.create({
     data: {
@@ -168,11 +168,8 @@ export async function createEnrollment(req: Request, res: Response) {
       Enrollmentno,
       eduqualification,
       IdCardNo,
-
       center: {
-        connect: {
-          id: 1,
-        },
+        connect: { id: centerid },
       },
     },
   });
@@ -191,7 +188,7 @@ export async function ActivateEnrollment(req: Request, res: Response) {
     },
   });
 
-  res.json({ ok: true, val });
+  res.json({ success: true, val });
 }
 
 export async function deActivateEnrollment(req: Request, res: Response) {
@@ -205,7 +202,7 @@ export async function deActivateEnrollment(req: Request, res: Response) {
     },
   });
 
-  res.json({ ok: true, val });
+  res.json({ success: true, val });
 }
 
 export async function createCenter(req: Request, res: Response) {
@@ -256,12 +253,12 @@ export async function AllEnrollments(req: Request, res: Response) {
 
 export async function generateCertificate(req: Request, res: Response) {
   await fillCertificate(req.body.data);
-  res.json({ ok: true });
+  res.json({ success: true });
 }
 
 export async function generateadmit(req: Request, res: Response) {
   await filladmit();
-  res.json({ ok: true });
+  res.json({ success: true });
 }
 
 export async function generateId(req: Request, res: Response) {
@@ -290,13 +287,13 @@ export async function generateId(req: Request, res: Response) {
   });
 
   if (!data) {
-    res.json({ ok: false });
+    res.json({ success: false });
     return;
   }
 
   await fillId(data);
 
-  res.json({ ok: true });
+  res.json({ success: true });
 }
 
 export async function generateMarksheet(req: Request, res: Response) {
@@ -334,21 +331,24 @@ export async function generateMarksheet(req: Request, res: Response) {
   })) as unknown as MarksheetData;
   console.log(JSON.stringify(md));
   if (!md) {
-    res.json({ ok: false });
+    res.json({ success: false });
     return;
   }
 
   await fillMarksheet(md);
 
-  res.json({ ok: true });
+  res.json({ success: true });
 }
 
 export async function exmformfillupDatafetch(req: Request, res: Response) {
+  // branch admin korbe
   const { enrollmentNo } = req.body;
+  const centerid = req.centerId;
 
   const data = await prisma.enrollment.findFirst({
     where: {
       Enrollmentno: enrollmentNo,
+      centerid,
     },
     include: {
       center: {
@@ -419,7 +419,7 @@ export async function exmformApprove(req: Request, res: Response) {
     },
   });
 
-  res.json({ ok: true, data });
+  res.json({ success: true, data });
 }
 
 export async function exmformDisApprove(req: Request, res: Response) {
@@ -434,7 +434,7 @@ export async function exmformDisApprove(req: Request, res: Response) {
     },
   });
 
-  res.json({ ok: true, data });
+  res.json({ success: true, data });
 }
 
 export async function exmmarksApprove(req: Request, res: Response) {
@@ -449,7 +449,7 @@ export async function exmmarksApprove(req: Request, res: Response) {
     },
   });
 
-  res.json({ ok: true, data });
+  res.json({ success: true, data });
 }
 export async function exmmarksDisApprove(req: Request, res: Response) {
   const { id } = req.body;
@@ -463,7 +463,7 @@ export async function exmmarksDisApprove(req: Request, res: Response) {
     },
   });
 
-  res.json({ ok: true, data });
+  res.json({ success: true, data });
 }
 export async function exmmarksentry(req: Request, res: Response) {
   const { EnrollmentNo, marks, remarks, grade, percentage, totalMarks, year } =
@@ -473,7 +473,7 @@ export async function exmmarksentry(req: Request, res: Response) {
     data: {
       EnrollmentNo,
       marks,
-      remarks: "PASS",
+      remarks,
       grade,
       percentage,
       totalMarks,
@@ -481,7 +481,7 @@ export async function exmmarksentry(req: Request, res: Response) {
     },
   });
 
-  res.json({ ok: true, data });
+  res.json({ success: true, data });
 }
 
 export async function exmformsfetch(req: Request, res: Response) {
@@ -519,7 +519,7 @@ export async function exmformsfetch(req: Request, res: Response) {
     },
   });
 
-  res.json({ ok: true, data });
+  res.json({ success: true, data });
 }
 
 export async function marksheetfetch(req: Request, res: Response) {
@@ -559,7 +559,7 @@ export async function marksheetfetch(req: Request, res: Response) {
     },
   });
 
-  res.json({ ok: true, data });
+  res.json({ success: true, data });
 }
 export async function TakeEnquiry(req: Request, res: Response) {
   const { name, email, message } = req.body;
@@ -572,7 +572,7 @@ export async function TakeEnquiry(req: Request, res: Response) {
     },
   });
 
-  res.json({ ok: true, data });
+  res.json({ success: true, data });
 }
 export async function FetchAllEnquiry(req: Request, res: Response) {
   const data = await prisma.enquiry.findMany({
@@ -601,7 +601,7 @@ export async function examFormFillup(req: Request, res: Response) {
     },
   });
 
-  res.json({ ok: true, data });
+  res.json({ success: true, data });
 }
 
 export async function amountFetch(req: Request, res: Response) {
@@ -626,7 +626,7 @@ export async function amountFetch(req: Request, res: Response) {
     },
   });
 
-  res.json({ ok: true, data });
+  res.json({ success: true, data });
 }
 
 export async function amountEdit(req: Request, res: Response) {
@@ -655,7 +655,7 @@ export async function amountEdit(req: Request, res: Response) {
     },
   });
 
-  res.json({ ok: true, data });
+  res.json({ success: true, data });
 }
 
 // enrollment activated on thakle id card download korte parbe

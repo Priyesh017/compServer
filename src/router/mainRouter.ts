@@ -31,6 +31,7 @@ import {
   amountEdit,
 } from "../controller/mainController";
 import { ErrorHandler } from "../errhandling";
+import { centerAuthCheckFn } from "../middleware";
 
 const router = Router();
 
@@ -43,7 +44,9 @@ router.route("/createCenter").post(ErrorHandler(createCenter));
 router.route("/AllEnrollments").get(ErrorHandler(AllEnrollments));
 router.route("/deActivateEnrollment").post(ErrorHandler(deActivateEnrollment));
 router.route("/ActivateEnrollment").post(ErrorHandler(ActivateEnrollment));
-router.route("/createEnrollment").post(ErrorHandler(createEnrollment));
+router
+  .route("/createEnrollment")
+  .post(centerAuthCheckFn, ErrorHandler(createEnrollment));
 router.route("/enrollCheck").post(ErrorHandler(enrollCheck));
 router.route("/createCourse").post(ErrorHandler(createCourse));
 
@@ -54,7 +57,7 @@ router.route("/generateId").post(ErrorHandler(generateId));
 router.route("/studentLogin").post(ErrorHandler(studentLogin));
 router
   .route("/exmformfillupDatafetch")
-  .post(ErrorHandler(exmformfillupDatafetch));
+  .post(centerAuthCheckFn, ErrorHandler(exmformfillupDatafetch));
 router.route("/exmmarksentry").post(ErrorHandler(exmmarksentry));
 router.route("/exmformsfetch").get(ErrorHandler(exmformsfetch));
 router.route("/marksheetfetch").get(ErrorHandler(marksheetfetch));
