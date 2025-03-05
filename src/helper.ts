@@ -124,7 +124,7 @@ export const formatDateForJS = (date: string) => {
 };
 
 export const accessTokenCookieOptions: CookieOptions = {
-  maxAge: 1000 * 60 * 20 * 2,
+  maxAge: 1000 * 60 * 20 * 3 * 12,
   httpOnly: true,
   sameSite: "none",
   secure: true,
@@ -134,7 +134,7 @@ export const accessTokenCookieOptions: CookieOptions = {
 export const Cookiehelper = (res: Response, user: any) => {
   const { password: m, ...userWithoutPassword } = user;
   const token = jwt.sign(userWithoutPassword, process.env.TOKEN_SECRET!, {
-    expiresIn: "1h",
+    expiresIn: "12h",
   });
   res
     .cookie("accessToken", token, accessTokenCookieOptions)
