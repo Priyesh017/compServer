@@ -146,10 +146,12 @@ export async function createEnrollment(req: Request, res: Response) {
     enrollmentNo: Enrollmentno,
     eduqualification,
     idno: IdCardNo,
+    courseid,
+    imageUrl,
   } = req.body;
 
   const dobUpdated = new Date(dob);
-  const centerid = req.centerId!;
+  const centerid = Number(req.centerId);
 
   const data = await prisma.enrollment.create({
     data: {
@@ -162,7 +164,7 @@ export async function createEnrollment(req: Request, res: Response) {
       wpNo,
       course: {
         connect: {
-          id: 1,
+          id: parseInt(courseid),
         },
       },
       Enrollmentno,
@@ -171,6 +173,7 @@ export async function createEnrollment(req: Request, res: Response) {
       center: {
         connect: { id: centerid },
       },
+      imageLink: imageUrl,
     },
   });
 
@@ -582,13 +585,28 @@ export async function FetchAllEnquiry(req: Request, res: Response) {
   res.json({ data });
 }
 export async function examFormFillup(req: Request, res: Response) {
-  const { enrollmentNo, ATI_CODE, ExamCenterCode, lprn } = req.body;
+  const {
+    enrollmentNo,
+    ATI_CODE,
+    ExamCenterCode,
+    lprn,
+    practExmdate,
+    theoryExamdate,
+    practExmtime,
+    theoryExmtime,
+    sem,
+  } = req.body;
 
   const data = await prisma.examForm.create({
     data: {
       EnrollmentNo: enrollmentNo,
       ATI_CODE,
       ExamCenterCode,
+      practExmdate,
+      theoryExamdate,
+      practExmtime,
+      theoryExmtime,
+      sem,
     },
   });
 

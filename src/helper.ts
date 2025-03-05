@@ -124,7 +124,7 @@ export const formatDateForJS = (date: string) => {
 };
 
 export const accessTokenCookieOptions: CookieOptions = {
-  maxAge: 1000 * 60 * 20 * 6,
+  maxAge: 1000 * 60 * 20 * 2,
   httpOnly: true,
   sameSite: "none",
   secure: true,

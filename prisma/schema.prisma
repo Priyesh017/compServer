@@ -41,6 +41,7 @@ model Enrollment {
   admitLink       String @default("")
   certificateLink String @default("")
   marksheetLink   String @default("")
+  imageLink       String @default("")
 
   name     String
   dob      DateTime
@@ -95,6 +96,11 @@ model ExamForm {
   createdAt      DateTime   @default(now())
   ExamCenterCode String
   ATI_CODE       String
+  practExmdate   String
+  theoryExamdate String
+  practExmtime   String
+  theoryExmtime  String
+  sem            String
 }
 
 model Marks {
@@ -109,6 +115,7 @@ model Marks {
   verified     Boolean    @default(false)
   createdAt    DateTime   @default(now())
   year         String
+  serialNo     BigInt     @default(autoincrement())
 }
 
 enum Remark {
