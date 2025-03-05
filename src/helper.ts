@@ -1,7 +1,7 @@
 import { CookieOptions, Response } from "express";
 import jwt from "jsonwebtoken";
 import fs from "fs";
-import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
+import { PDFDocument, rgb, StandardFonts, PDFFont } from "pdf-lib";
 import QRCode from "qrcode";
 import sharp from "sharp";
 
@@ -146,17 +146,17 @@ const adjustCenteredTextPosition = (
   text: string,
   pdfWidth: number,
   pdfHeight: number,
-  yOffset: number, // Allows positioning different texts at different heights
+  yOffset: number, // Distance from the top
+  font: PDFFont, // Font object to measure text width accurately
   baseFontSize: number = 80
 ) => {
   let fontSize = baseFontSize;
-  const avgCharWidth = fontSize * 0.5; // Approximate character width (adjust if needed)
-  const textWidth = text.length * avgCharWidth; // Estimate text width
+  const textWidth = font.widthOfTextAtSize(text, fontSize); // Get accurate text width
 
   // Calculate X position to center the text
   const x = (pdfWidth - textWidth) / 2;
 
-  // Adjust Y position with the given offset
+  // Adjust Y position based on the given offset (distance from the top)
   const y = pdfHeight - yOffset;
 
   return { x, y, size: fontSize };
@@ -411,6 +411,7 @@ export async function fillId({
 }: dtype) {
   const existingPdfBytes = fs.readFileSync("files/id.pdf");
   const pdfDoc = await PDFDocument.load(existingPdfBytes);
+  const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
   const page = pdfDoc.getPages()[0];
   const pdfHeight = page.getHeight();
   const pdfWidth = page.getWidth();
@@ -423,14 +424,16 @@ export async function fillId({
     pdfWidth,
     pdfHeight,
     940,
+    font,
     80
   );
   const cNamePosition = adjustCenteredTextPosition(
     CName,
     pdfWidth,
     pdfHeight,
-    1020,
-    60
+    1000,
+    font,
+    40
   );
 
   page.drawText(name, {
@@ -450,29 +453,77 @@ export async function fillId({
   page.drawText(`ID NO: ${IdCardNo}`, {
     x: 80,
     y: pdfHeight - 1100,
-    size: 60,
+    size: 50,
     color: rgb(0, 0, 0),
   });
 
   page.drawText(`ENROLLMENT: ${Enrollmentno}`, {
     x: 70,
     y: pdfHeight - 1180,
-    size: 60,
+    size: 50,
     color: rgb(0, 0, 0),
   });
 
   page.drawText(`ADDRESS: ${address}`, {
     x: 70,
     y: pdfHeight - 1260,
-    size: 60,
+    size: 50,
     color: rgb(0, 0, 0),
   });
 
-  page.drawText(`CENTER: ${Centername}`, {
-    x: 70,
-    y: pdfHeight - 1340,
-    size: 60,
-    color: rgb(0, 0, 0),
+  interface WrapTextParams {
+    text: string;
+    maxWidth: number;
+    font: PDFDocument["fonts"][0];
+    fontSize: number;
+  }
+
+  const wrapText = ({
+    text,
+    maxWidth,
+    font,
+    fontSize,
+  }: WrapTextParams): string[] => {
+    const words = text.split(" ");
+    let lines: string[] = [];
+    let currentLine = words[0];
+
+    for (let i = 1; i < words.length; i++) {
+      let word = words[i];
+      let width = font.widthOfTextAtSize(`${currentLine} ${word}`, fontSize);
+
+      if (width < maxWidth) {
+        currentLine += ` ${word}`;
+      } else {
+        lines.push(currentLine);
+        currentLine = word;
+      }
+    }
+    lines.push(currentLine);
+    return lines;
+  };
+
+  // Define text wrapping parameters
+  const maxWidth = pdfWidth - 60; // Adjust as needed
+  const fontSize = 50;
+  const wrappedLines = wrapText({
+    text: `CENTER: ${Centername}`,
+    maxWidth,
+    font,
+    fontSize,
+  });
+
+  // Draw wrapped text
+  let yPosition = pdfHeight - 1340;
+
+  wrappedLines.forEach((line) => {
+    page.drawText(line, {
+      x: 70,
+      y: yPosition,
+      size: fontSize,
+      color: rgb(0, 0, 0),
+    });
+    yPosition -= fontSize + 5; // Adjust line spacing
   });
 
   const Image = await pdfDoc.embedPng(imageBytes);
