@@ -115,7 +115,7 @@ model Marks {
   verified     Boolean    @default(false)
   createdAt    DateTime   @default(now())
   year         String
-  serialNo     BigInt     @default(autoincrement())
+  serialNo     Int        @default(autoincrement())
 }
 
 enum Remark {

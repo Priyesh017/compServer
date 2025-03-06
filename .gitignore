@@ -3,3 +3,7 @@ node_modules
 pnpm-lock.yaml
 circle.png
 dist
+filled_admit.pdf
+filled_id.pdf
+filled_certificate.pdf
+filled_Marksheet.pdf

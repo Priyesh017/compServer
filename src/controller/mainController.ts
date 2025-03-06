@@ -76,7 +76,6 @@ export async function signupFunc(req: Request, res: Response) {
 
     res.status(201).json({ message: "User registered successfully" });
   } catch (error) {
-    console.log(error);
     res.status(400).json({ message: "User registration failed" });
   }
 }
@@ -93,7 +92,7 @@ export async function loginCheckFunc(req: Request, res: Response) {
       accessToken,
       process.env.TOKEN_SECRET!
     ) as jwt.JwtPayload & { eno?: string };
-    console.log(JSON.stringify(user));
+
     if (user.eno) {
       const data = await prisma.enrollment.findFirst({
         where: {
@@ -303,7 +302,6 @@ export async function generateMarksheet(req: Request, res: Response) {
   const { data } = req.body;
   const enrollmentNo = data.EnrollmentNo;
 
-  console.log(enrollmentNo);
   const md = (await prisma.marks.findFirst({
     where: {
       EnrollmentNo: enrollmentNo,
@@ -332,7 +330,7 @@ export async function generateMarksheet(req: Request, res: Response) {
       },
     },
   })) as unknown as MarksheetData;
-  console.log(JSON.stringify(md));
+
   if (!md) {
     res.json({ success: false });
     return;
@@ -471,6 +469,9 @@ export async function exmmarksDisApprove(req: Request, res: Response) {
 export async function exmmarksentry(req: Request, res: Response) {
   const { EnrollmentNo, marks, remarks, grade, percentage, totalMarks, year } =
     req.body;
+  const p = parseFloat(percentage);
+  const tm = parseFloat(totalMarks);
+  console.log(JSON.stringify(req.body));
 
   const data = await prisma.marks.create({
     data: {
@@ -478,8 +479,8 @@ export async function exmmarksentry(req: Request, res: Response) {
       marks,
       remarks,
       grade,
-      percentage,
-      totalMarks,
+      percentage: p,
+      totalMarks: tm,
       year,
     },
   });
@@ -526,9 +527,6 @@ export async function exmformsfetch(req: Request, res: Response) {
 }
 
 export async function marksheetfetch(req: Request, res: Response) {
-  // central admin fetch korbe eta
-  //Marksheet Verify page e
-  // jei branch er admin sei branch er enrollment and form fillup dekhte parbe
   const data = await prisma.marks.findMany({
     where: {
       enrollment: {
@@ -589,12 +587,12 @@ export async function examFormFillup(req: Request, res: Response) {
     enrollmentNo,
     ATI_CODE,
     ExamCenterCode,
-    lprn,
-    practExmdate,
-    theoryExamdate,
-    practExmtime,
-    theoryExmtime,
-    sem,
+    lastpaymentR,
+    ped,
+    ted,
+    pet,
+    tet,
+    SemNo,
   } = req.body;
 
   const data = await prisma.examForm.create({
@@ -602,11 +600,11 @@ export async function examFormFillup(req: Request, res: Response) {
       EnrollmentNo: enrollmentNo,
       ATI_CODE,
       ExamCenterCode,
-      practExmdate,
-      theoryExamdate,
-      practExmtime,
-      theoryExmtime,
-      sem,
+      practExmdate: ped,
+      theoryExamdate: ted,
+      practExmtime: pet,
+      theoryExmtime: tet,
+      sem: SemNo,
     },
   });
 
@@ -615,7 +613,7 @@ export async function examFormFillup(req: Request, res: Response) {
       EnrollmentNo: enrollmentNo,
     },
     data: {
-      lastPaymentRecieptno: lprn,
+      lastPaymentRecieptno: lastpaymentR,
     },
   });
 
