@@ -58,7 +58,37 @@ interface iData {
     };
   };
 }
-
+type DataItem = {
+  id: number;
+  EnrollmentNo: string;
+  verified: boolean;
+  createdAt: string;
+  ExamCenterCode: string;
+  ATI_CODE: string;
+  practExmdate: string;
+  theoryExamdate: string;
+  practExmtime: string;
+  theoryExmtime: string;
+  sem: string;
+  enrollment: {
+    name: string;
+    mobileNo: string;
+    wpNo: string;
+    Enrollmentno: string;
+    address: string;
+    center: {
+      Centername: string;
+    };
+    father: string;
+    IdCardNo: string;
+    amount: {
+      lastPaymentRecieptno: string;
+    };
+    course: {
+      CName: string;
+    };
+  };
+};
 export type MarksheetData = {
   enrollment: {
     name: string;
@@ -282,7 +312,21 @@ export async function fillCertificate({
   fs.writeFileSync("filled_certificate.pdf", pdfBytes);
 }
 
-export async function filladmit() {
+export async function filladmit({
+  EnrollmentNo,
+  enrollment: {
+    name,
+    father,
+    course: { CName },
+  },
+  ATI_CODE,
+  ExamCenterCode,
+  theoryExamdate,
+  practExmdate,
+  practExmtime,
+  theoryExmtime,
+  sem,
+}: DataItem) {
   const existingPdfBytes = fs.readFileSync("files/admit.pdf");
   const pdfDoc = await PDFDocument.load(existingPdfBytes);
   const imageBytes = fs.readFileSync("files/temp.jpg");
@@ -294,84 +338,84 @@ export async function filladmit() {
   const image = await pdfDoc.embedJpg(imageBytes);
   const image2 = await pdfDoc.embedPng(imageBytes2);
 
-  page.drawText("John Doe", {
+  page.drawText(EnrollmentNo, {
     x: 165,
     y: pdfHeight - 156,
     size: 13,
     color: rgb(0, 0, 0),
   });
 
-  page.drawText("John Doe", {
+  page.drawText(name, {
     x: 165,
     y: pdfHeight - 173,
     size: 13,
     color: rgb(0, 0, 0),
   });
 
-  page.drawText("John Doe", {
+  page.drawText(father, {
     x: 165,
     y: pdfHeight - 190,
     size: 13,
     color: rgb(0, 0, 0),
   });
 
-  page.drawText("John Doe", {
+  page.drawText(CName, {
     x: 165,
     y: pdfHeight - 207,
     size: 13,
     color: rgb(0, 0, 0),
   });
 
-  page.drawText("John Doe", {
+  page.drawText(ATI_CODE, {
     x: 165,
     y: pdfHeight - 224,
     size: 13,
     color: rgb(0, 0, 0),
   });
 
-  page.drawText("John Doe", {
+  page.drawText(ExamCenterCode, {
     x: 165,
     y: pdfHeight - 241,
     size: 13,
     color: rgb(0, 0, 0),
   });
 
-  page.drawText("12/12/12", {
+  page.drawText(theoryExamdate, {
     x: 83,
     y: pdfHeight - 272,
     size: 8,
     color: rgb(0, 0, 0),
   });
 
-  page.drawText("12:00", {
+  page.drawText(theoryExmtime, {
     x: 145,
     y: pdfHeight - 272,
     size: 8,
     color: rgb(0, 0, 0),
   });
 
-  page.drawText("5th", {
+  page.drawText(sem, {
     x: 208,
     y: pdfHeight - 272,
     size: 8,
     color: rgb(0, 0, 0),
   });
 
-  page.drawText("12/12/12", {
+  page.drawText(practExmdate, {
     x: 83,
     y: pdfHeight - 289,
     size: 8,
     color: rgb(0, 0, 0),
   });
 
-  page.drawText("12:00", {
+  page.drawText(practExmtime, {
     x: 145,
     y: pdfHeight - 289,
     size: 8,
     color: rgb(0, 0, 0),
   });
 
-  page.drawText("5th", {
+  page.drawText(sem, {
     x: 208,
     y: pdfHeight - 289,
     size: 8,

@@ -259,7 +259,7 @@ export async function generateCertificate(req: Request, res: Response) {
 }
 
 export async function generateadmit(req: Request, res: Response) {
-  await filladmit();
+  await filladmit(req.body);
   res.json({ success: true });
 }
 
@@ -499,6 +499,7 @@ export async function exmformsfetch(req: Request, res: Response) {
           wpNo: true,
           Enrollmentno: true,
           address: true,
+          father: true,
           center: {
             select: {
               Centername: true,
