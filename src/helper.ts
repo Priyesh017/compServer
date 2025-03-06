@@ -73,6 +73,7 @@ type DataItem = {
     mobileNo: string;
     wpNo: string;
     Enrollmentno: string;
+    imageLink: string;
     address: string;
     center: {
       Centername: string;
@@ -320,14 +321,14 @@ export async function fillCertificate({
 
   const params = {
     Bucket: process.env.AWS_BUCKET_NAME,
-    Key: `certifcates/${n}-${totalMarks}.pdf`,
+    Key: `certificates/${n}-${totalMarks}.pdf`,
     Body: pdfBytes,
     ContentType: "application/pdf",
   };
 
   const command = new PutObjectCommand(params);
   await s3.send(command);
-  const pdfUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/certifcates/${n}-${totalMarks}.pdf`;
+  const pdfUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/certificates/${n}-${totalMarks}.pdf`;
 
   return pdfUrl;
 
@@ -340,6 +341,7 @@ export async function filladmit({
     name,
     father,
     course: { CName },
+    imageLink,
   },
   ATI_CODE,
   ExamCenterCode,
@@ -351,13 +353,18 @@ export async function filladmit({
 }: DataItem) {
   const existingPdfBytes = fs.readFileSync("files/admit.pdf");
   const pdfDoc = await PDFDocument.load(existingPdfBytes);
-  const imageBytes = fs.readFileSync("files/temp.jpg");
+
+  const response = await axios({
+    url: imageLink,
+    responseType: "arraybuffer", // Download as buffer
+  });
+
   const imageBytes2 = fs.readFileSync("files/sign.png");
 
   const page = pdfDoc.getPages()[0];
   const pdfHeight = page.getHeight();
 
-  const image = await pdfDoc.embedJpg(imageBytes);
+  const image = await pdfDoc.embedJpg(Buffer.from(response.data));
   const image2 = await pdfDoc.embedPng(imageBytes2);
 
   page.drawText(EnrollmentNo, {
@@ -462,14 +469,14 @@ export async function filladmit({
 
   const params = {
     Bucket: process.env.AWS_BUCKET_NAME,
-    Key: `certifcates/${n}-${sem}.pdf`,
+    Key: `admit/${n}-${sem}.pdf`,
     Body: pdfBytes,
     ContentType: "application/pdf",
   };
 
   const command = new PutObjectCommand(params);
   await s3.send(command);
-  const pdfUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/certifcates/${n}-${sem}.pdf`;
+  const pdfUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/admit/${n}-${sem}.pdf`;
   return pdfUrl;
 
   // fs.writeFileSync("filled_admit.pdf", pdfBytes);
@@ -631,13 +638,13 @@ export async function fillId({
 
   const params = {
     Bucket: process.env.AWS_BUCKET_NAME,
-    Key: `certifcates/${n}-${IdCardNo}.pdf`,
+    Key: `idcard/${n}-${IdCardNo}.pdf`,
     Body: pdfBytes,
     ContentType: "application/pdf",
   };
   const command = new PutObjectCommand(params);
   await s3.send(command);
-  const pdfUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/certifcates/${n}-${IdCardNo}.pdf`;
+  const pdfUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/idcard/${n}-${IdCardNo}.pdf`;
   return pdfUrl;
   // fs.writeFileSync("filled_id.pdf", pdfBytes);
 }
@@ -894,14 +901,14 @@ export async function fillMarksheet(data: MarksheetData) {
 
   const params = {
     Bucket: process.env.AWS_BUCKET_NAME,
-    Key: `certifcates/${n}-${data.totalMarks}.pdf`,
+    Key: `marksheet/${n}-${data.totalMarks}.pdf`,
     Body: pdfBytes,
     ContentType: "application/pdf",
   };
 
   const command = new PutObjectCommand(params);
   await s3.send(command);
-  const pdfUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/certifcates/${n}-${data.totalMarks}.pdf`;
+  const pdfUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/marksheet/${n}-${data.totalMarks}.pdf`;
   return pdfUrl;
   // fs.writeFileSync("filled_Marksheet.pdf", pdfBytes);
 }

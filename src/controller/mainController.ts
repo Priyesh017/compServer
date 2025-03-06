@@ -507,6 +507,7 @@ export async function exmformsfetch(req: Request, res: Response) {
           mobileNo: true,
           wpNo: true,
           Enrollmentno: true,
+          imageLink: true,
           address: true,
           father: true,
           center: {
