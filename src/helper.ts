@@ -114,8 +114,6 @@ async function makeCircularImage() {
     .composite([{ input: circleMask, blend: "dest-in" }]) // Apply mask
     .png() // Output as PNG to keep transparency
     .toFile(outputPath);
-
-  console.log(`Circular image saved as ${outputPath}`);
 }
 
 export const formatDateForJS = (date: string) => {
@@ -124,7 +122,7 @@ export const formatDateForJS = (date: string) => {
 };
 
 export const accessTokenCookieOptions: CookieOptions = {
-  maxAge: 1000 * 60 * 20 * 6,
+  maxAge: 1000 * 60 * 20 * 3 * 12,
   httpOnly: true,
   sameSite: "none",
   secure: true,
@@ -134,7 +132,7 @@ export const accessTokenCookieOptions: CookieOptions = {
 export const Cookiehelper = (res: Response, user: any) => {
   const { password: m, ...userWithoutPassword } = user;
   const token = jwt.sign(userWithoutPassword, process.env.TOKEN_SECRET!, {
-    expiresIn: "1h",
+    expiresIn: "12h",
   });
   res
     .cookie("accessToken", token, accessTokenCookieOptions)
@@ -180,7 +178,7 @@ export async function fillCertificate({
     Centername,
     totalMarks,
   };
-  console.log("first");
+
   const qrText = JSON.stringify(studentData);
   const qrCodeBuffer = await QRCode.toBuffer(qrText);
 
@@ -204,7 +202,7 @@ export async function fillCertificate({
     width,
     height,
   });
-  console.log("1");
+
   // Draw the image at a specific position (x, y)
   page.drawImage(image, {
     x: 475, // Adjust X position
@@ -226,7 +224,7 @@ export async function fillCertificate({
     size: fontSize,
     color: rgb(0, 0, 0),
   });
-  console.log("2");
+
   page.drawText(father, {
     x: 248,
     y: pdfHeight - 291,
@@ -239,14 +237,14 @@ export async function fillCertificate({
     size: fontSize,
     color: rgb(0, 0, 0),
   });
-  console.log("22");
+
   page.drawText(`${Duration.toString()} months`, {
     x: 145,
     y: pdfHeight - 367,
     size: fontSize,
     color: rgb(0, 0, 0),
   });
-  console.log("3");
+
   page.drawText(year, {
     x: 472,
     y: pdfHeight - 367,
@@ -271,19 +269,17 @@ export async function fillCertificate({
     size: 16,
     color: rgb(0, 0, 0),
   });
-  console.log("first2");
+
   page.drawText(new Date(Date.now()).toLocaleDateString(), {
     x: 249,
     y: pdfHeight - 445,
     size: fontSize,
     color: rgb(0, 0, 0),
   });
-  console.log("first3");
+
   // Serialize the document and write it to a file
   const pdfBytes = await pdfDoc.save();
   fs.writeFileSync("filled_certificate.pdf", pdfBytes);
-
-  console.log("PDF generated successfully: filled_certificate.pdf");
 }
 
 export async function filladmit() {
@@ -397,8 +393,6 @@ export async function filladmit() {
   });
   const pdfBytes = await pdfDoc.save();
   fs.writeFileSync("filled_admit.pdf", pdfBytes);
-
-  console.log("PDF generated successfully: filled_certificate.pdf");
 }
 
 export async function fillId({
@@ -552,8 +546,6 @@ export async function fillId({
 
   const pdfBytes = await pdfDoc.save();
   fs.writeFileSync("filled_id.pdf", pdfBytes);
-
-  console.log("PDF generated successfully: filled_id.pdf");
 }
 
 export async function fillMarksheet(data: MarksheetData) {
@@ -769,8 +761,6 @@ export async function fillMarksheet(data: MarksheetData) {
   // Save the PDF
   const pdfBytes = await pdfDoc.save();
   fs.writeFileSync("filled_Marksheet.pdf", pdfBytes);
-
-  console.log("PDF generated successfully: filled_marksheet.pdf");
 }
 
 // uthate gele komabo

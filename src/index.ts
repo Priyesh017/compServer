@@ -41,7 +41,7 @@ app.get("/generate-presigned-url", async (req, res) => {
     const category = req.query.category as string;
 
     const Key = `images/${category}/${fileName}`;
-    console.log(Key);
+
     const command = new PutObjectCommand({
       Bucket: process.env.AWS_BUCKET_NAME,
       Key: Key,
