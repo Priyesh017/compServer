@@ -4,15 +4,8 @@ import fs from "fs";
 import { PDFDocument, rgb, StandardFonts, PDFFont } from "pdf-lib";
 import QRCode from "qrcode";
 import sharp from "sharp";
-
-interface ftype {
-  enrollNo: string;
-  stuName: string;
-  fName: string;
-  courseCode: string;
-  atiCode: string;
-  ecCode: string;
-}
+import axios from "axios";
+import path from "path";
 
 interface dtype {
   name: string;
@@ -25,6 +18,8 @@ interface dtype {
   };
   Enrollmentno: string;
   IdCardNo: string;
+  imageLink: string;
+  mobileNo: string;
 }
 
 interface iData {
@@ -48,6 +43,7 @@ interface iData {
     name: string;
     father: string;
     dob: string;
+    imageLink: string;
     course: {
       CName: string;
       Duration: number;
@@ -93,8 +89,8 @@ export type MarksheetData = {
   enrollment: {
     name: string;
     father: string;
-    mother: string;
-    dob: Date;
+    dob: string;
+    imageLink: string;
     center: {
       Centername: string;
       code: string;
@@ -122,25 +118,28 @@ export type MarksheetData = {
   totalMarks: number;
 };
 
-async function makeCircularImage() {
-  const inputPath = "files/temp.jpg"; // Replace with your square image
-  const outputPath = "circle.png"; // Output will be a PNG (supports transparency)
+const RADIUS = 470;
+async function makeCircularImage(imageLink: string) {
+  const tempPath = path.join(__dirname, "..", "tempid.jpg");
+  const outputPath = path.join(__dirname, "..", "circle.png");
 
-  // Load image and get dimensions
-  const metadata = await sharp(inputPath).metadata();
+  // Download image
+  const response = await axios({
+    url: imageLink,
+    responseType: "arraybuffer", // Download as buffer
+  });
+  fs.writeFileSync(tempPath, Buffer.from(response.data));
 
-  const size = Math.min(metadata.width ?? 0, metadata.height ?? 0); // Use the smaller side for a perfect circle
-
-  // Create a circular mask
+  // Create a circular mask with a fixed size
   const circleMask = Buffer.from(`
-    <svg width="${size}" height="${size}">
-      <circle cx="${size / 2}" cy="${size / 2}" r="${size / 2}" fill="white"/>
+    <svg width="${RADIUS * 2}" height="${RADIUS * 2}">
+      <circle cx="${RADIUS}" cy="${RADIUS}" r="${RADIUS}" fill="white"/>
     </svg>
   `);
 
-  // Apply the circular mask to the image
-  await sharp(inputPath)
-    .resize(size, size) // Make it a square if it's not already
+  // Apply the circular mask with a fixed radius
+  await sharp(tempPath)
+    .resize(RADIUS * 2, RADIUS * 2) // Resize to fixed size
     .composite([{ input: circleMask, blend: "dest-in" }]) // Apply mask
     .png() // Output as PNG to keep transparency
     .toFile(outputPath);
@@ -195,6 +194,7 @@ export async function fillCertificate({
   year,
   enrollment: {
     name,
+    imageLink,
     father,
     course: { CName, Duration },
     center: { Centername },
@@ -214,7 +214,12 @@ export async function fillCertificate({
 
   const existingPdfBytes = fs.readFileSync("files/certificate.pdf");
   const pdfDoc = await PDFDocument.load(existingPdfBytes);
-  const imageBytes = fs.readFileSync("files/temp.jpg");
+
+  const response = await axios({
+    url: imageLink,
+    responseType: "arraybuffer", // Download as buffer
+  });
+  const Image = await pdfDoc.embedJpg(Buffer.from(response.data));
 
   // Get the first page
   const page = pdfDoc.getPages()[0];
@@ -223,7 +228,7 @@ export async function fillCertificate({
   // Embed QR Code image
   const qrImage = await pdfDoc.embedPng(qrCodeBuffer);
   const { width, height } = qrImage.scale(0.3); // Adjust QR size
-  const image = await pdfDoc.embedJpg(imageBytes);
+
   // Position QR Code (adjust x, y as needed)
 
   page.drawImage(qrImage, {
@@ -234,7 +239,7 @@ export async function fillCertificate({
   });
 
   // Draw the image at a specific position (x, y)
-  page.drawImage(image, {
+  page.drawImage(Image, {
     x: 475, // Adjust X position
     y: pdfHeight - 220, // Adjust Y position (PDF coordinates start from bottom-left)
     width,
@@ -443,6 +448,8 @@ export async function fillId({
   Enrollmentno,
   IdCardNo,
   address,
+  imageLink,
+  mobileNo,
   center: { Centername },
   course: { CName },
   name,
@@ -454,7 +461,7 @@ export async function fillId({
   const pdfHeight = page.getHeight();
   const pdfWidth = page.getWidth();
 
-  // await makeCircularImage();
+  await makeCircularImage(imageLink);
   const imageBytes = fs.readFileSync("circle.png");
 
   const sNamePosition = adjustCenteredTextPosition(
@@ -574,14 +581,14 @@ export async function fillId({
     height,
   });
 
-  page.drawText("2025 Benson street,Wausau", {
+  page.drawText(address, {
     x: 23,
     y: pdfHeight - 1540,
     size: 45,
     color: rgb(1, 1, 1),
   });
 
-  page.drawText("ph:8981596525", {
+  page.drawText(`ph: ${mobileNo}`, {
     x: 690,
     y: pdfHeight - 1656,
     size: 45,
@@ -598,6 +605,41 @@ export async function fillMarksheet(data: MarksheetData) {
   const page = pdfDoc.getPages()[0];
   const pdfHeight = page.getHeight();
   const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold); // Embed bold font
+
+  const response = await axios({
+    url: data.enrollment.imageLink,
+    responseType: "arraybuffer", // Download as buffer
+  });
+
+  const Image = await pdfDoc.embedJpg(Buffer.from(response.data));
+
+  const studentData = {
+    Name: data.enrollment.name,
+    EnrollmentNo: data.EnrollmentNo,
+    CourseName: data.enrollment.course.CName,
+    Centername: data.enrollment.center.Centername,
+    totalMarks: data.totalMarks,
+  };
+
+  const qrText = JSON.stringify(studentData);
+
+  const qrCodeBuffer = await QRCode.toBuffer(qrText);
+
+  const qrImage = await pdfDoc.embedPng(qrCodeBuffer);
+  const { width, height } = qrImage.scale(0.27);
+
+  page.drawImage(qrImage, {
+    x: 35, // Adjust X position
+    y: pdfHeight - 180, // Adjust Y position (PDF starts from bottom-left)
+    width,
+    height,
+  });
+  page.drawImage(Image, {
+    x: 525, // Adjust X position
+    y: pdfHeight - 180, // Adjust Y position (PDF coordinates start from bottom-left)
+    width,
+    height,
+  });
 
   // Student Information
   page.drawText(data.enrollment.name.toUpperCase(), {
@@ -642,6 +684,7 @@ export async function fillMarksheet(data: MarksheetData) {
     size: 10,
     color: rgb(0, 0, 0),
   });
+
   page.drawText(data.enrollment.center.code.toUpperCase(), {
     x: 480,
     y: pdfHeight - 295,
@@ -654,7 +697,8 @@ export async function fillMarksheet(data: MarksheetData) {
     size: 12,
     color: rgb(0, 0, 0),
   });
-  page.drawText(data.enrollment.dob.toLocaleDateString(), {
+
+  page.drawText(new Date(data.enrollment.dob).toLocaleDateString(), {
     x: 470,
     y: pdfHeight - 320,
     size: 12,
@@ -671,7 +715,6 @@ export async function fillMarksheet(data: MarksheetData) {
 
   // Subjects and Marks
   let yPosition = pdfHeight - 410;
-
   data.marks.forEach((subject) => {
     const tm = parseInt(subject.theoryMarks);
     const pm = parseInt(subject.practicalMarks);
@@ -807,4 +850,5 @@ export async function fillMarksheet(data: MarksheetData) {
   fs.writeFileSync("filled_Marksheet.pdf", pdfBytes);
 }
 
+async function awsUpload() {}
 // uthate gele komabo

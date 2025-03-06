@@ -235,10 +235,12 @@ export async function AllEnrollments(req: Request, res: Response) {
   const enrollments = await prisma.enrollment.findMany({
     skip,
     take: limit,
+    where: req.Role === "CENTER" ? { centerid: Number(req.centerId) } : {},
     select: {
       admitLink: true,
       certificateLink: true,
       dob: true,
+      imageLink: true,
       idCardLink: true,
       marksheetLink: true,
       name: true,
@@ -259,11 +261,12 @@ export async function generateCertificate(req: Request, res: Response) {
 }
 
 export async function generateadmit(req: Request, res: Response) {
-  await filladmit(req.body);
+  await filladmit(req.body.enrollment);
   res.json({ success: true });
 }
 
 export async function generateId(req: Request, res: Response) {
+  //make it efficient
   const { Enrollmentno } = req.body;
 
   const data = await prisma.enrollment.findFirst({
@@ -272,6 +275,8 @@ export async function generateId(req: Request, res: Response) {
     },
     select: {
       address: true,
+      mobileNo: true,
+      imageLink: true,
       center: {
         select: {
           Centername: true,
@@ -299,44 +304,15 @@ export async function generateId(req: Request, res: Response) {
 }
 
 export async function generateMarksheet(req: Request, res: Response) {
-  const { data } = req.body;
-  const enrollmentNo = data.EnrollmentNo;
+  // make it efficient
+  const data = req.body.data as MarksheetData;
 
-  const md = (await prisma.marks.findFirst({
-    where: {
-      EnrollmentNo: enrollmentNo,
-    },
-    include: {
-      enrollment: {
-        select: {
-          name: true,
-          father: true,
-          mother: true,
-          dob: true,
-          center: {
-            select: {
-              Centername: true,
-              code: true,
-              address: true,
-            },
-          },
-          course: {
-            select: {
-              CName: true,
-              Duration: true,
-            },
-          },
-        },
-      },
-    },
-  })) as unknown as MarksheetData;
-
-  if (!md) {
+  if (!data) {
     res.json({ success: false });
     return;
   }
 
-  await fillMarksheet(md);
+  await fillMarksheet(data);
 
   res.json({ success: true });
 }
@@ -541,6 +517,7 @@ export async function marksheetfetch(req: Request, res: Response) {
           name: true,
           father: true,
           dob: true,
+          imageLink: true,
           course: {
             select: {
               CName: true,
@@ -550,6 +527,7 @@ export async function marksheetfetch(req: Request, res: Response) {
           center: {
             select: {
               Centername: true,
+              code: true,
               address: true,
             },
           },
@@ -622,11 +600,11 @@ export async function examFormFillup(req: Request, res: Response) {
 }
 
 export async function amountFetch(req: Request, res: Response) {
-  const { id } = req.body;
+  const id = Number(req.centerId);
 
   const data = await prisma.enrollment.findMany({
     where: {
-      centerid: 1,
+      centerid: id,
     },
     include: {
       amount: {
@@ -674,7 +652,3 @@ export async function amountEdit(req: Request, res: Response) {
 
   res.json({ success: true, data });
 }
-
-// enrollment activated on thakle id card download korte parbe
-// examform fillup verified thakle admit download kora jabe
-// marksheet e pass thakle certificate download kora jabe and always result download hobe

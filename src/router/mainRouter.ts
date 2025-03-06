@@ -41,7 +41,9 @@ router.route("/logout").get(ErrorHandler(logoutfunc));
 router.route("/signupRoute").post(signupFunc);
 
 router.route("/createCenter").post(ErrorHandler(createCenter));
-router.route("/AllEnrollments").get(ErrorHandler(AllEnrollments));
+router
+  .route("/AllEnrollments")
+  .get(centerAuthCheckFn, ErrorHandler(AllEnrollments));
 router.route("/deActivateEnrollment").post(ErrorHandler(deActivateEnrollment));
 router.route("/ActivateEnrollment").post(ErrorHandler(ActivateEnrollment));
 router
@@ -67,7 +69,7 @@ router.route("/TakeEnquiry").post(ErrorHandler(TakeEnquiry));
 router.route("/examFormFillup").post(ErrorHandler(examFormFillup));
 router.route("/exmformApprove").post(ErrorHandler(exmformApprove));
 router.route("/exmmarksDisApprove").post(ErrorHandler(exmmarksDisApprove));
-router.route("/amountFetch").post(ErrorHandler(amountFetch));
+router.route("/amountFetch").post(centerAuthCheckFn, ErrorHandler(amountFetch));
 router.route("/FetchAllEnquiry").get(ErrorHandler(FetchAllEnquiry));
 router.route("/amountEdit").post(ErrorHandler(amountEdit));
 

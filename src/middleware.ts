@@ -9,28 +9,6 @@ interface iuserWithoutPassword {
   role: "ADMIN" | "CENTER";
 }
 
-export const adminAuthCheckFn = (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  const { accessToken } = req.signedCookies;
-
-  if (!accessToken) {
-    res.json({ message: "not valid user" });
-    return;
-  }
-
-  const user = jwt.verify(
-    accessToken,
-    process.env.TOKEN_SECRET!
-  ) as iuserWithoutPassword;
-  if (user.role === "ADMIN") {
-    req.myProp = user.id;
-    next();
-  } else res.json({ message: "not admin user" });
-};
-
 export const centerAuthCheckFn = async (
   req: Request,
   res: Response,
@@ -48,7 +26,7 @@ export const centerAuthCheckFn = async (
     process.env.TOKEN_SECRET!
   ) as iuserWithoutPassword;
   if (user.role === "CENTER") {
-    req.myProp = user.id;
+    req.Role = user.role;
 
     const centerId = await prisma.center.findFirst({
       where: {
@@ -66,8 +44,10 @@ export const centerAuthCheckFn = async (
     req.centerId = centerId.id;
 
     next();
+  } else if (user.role === "ADMIN") {
+    req.Role = user.role;
+    next();
   } else {
     res.json({ message: "not center admin user" });
-    return;
   }
 };
