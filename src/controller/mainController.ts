@@ -256,17 +256,34 @@ export async function AllEnrollments(req: Request, res: Response) {
 }
 
 export async function generateCertificate(req: Request, res: Response) {
-  await fillCertificate(req.body.data);
+  const link = await fillCertificate(req.body.data);
+
+  await prisma.enrollment.update({
+    where: {
+      Enrollmentno: req.body.data.EnrollmentNo,
+    },
+    data: {
+      certificateLink: link,
+    },
+  });
   res.json({ success: true });
 }
 
 export async function generateadmit(req: Request, res: Response) {
-  await filladmit(req.body.enrollment);
+  const link = await filladmit(req.body.enrollment);
+
+  await prisma.enrollment.update({
+    where: {
+      Enrollmentno: req.body.enrollment.EnrollmentNo,
+    },
+    data: {
+      admitLink: link,
+    },
+  });
   res.json({ success: true });
 }
 
 export async function generateId(req: Request, res: Response) {
-  //make it efficient
   const { Enrollmentno } = req.body;
 
   const data = await prisma.enrollment.findFirst({
@@ -298,13 +315,20 @@ export async function generateId(req: Request, res: Response) {
     return;
   }
 
-  await fillId(data);
+  const link = await fillId(data);
 
+  await prisma.enrollment.update({
+    where: {
+      Enrollmentno,
+    },
+    data: {
+      idCardLink: link,
+    },
+  });
   res.json({ success: true });
 }
 
 export async function generateMarksheet(req: Request, res: Response) {
-  // make it efficient
   const data = req.body.data as MarksheetData;
 
   if (!data) {
@@ -312,7 +336,16 @@ export async function generateMarksheet(req: Request, res: Response) {
     return;
   }
 
-  await fillMarksheet(data);
+  const link = await fillMarksheet(data);
+
+  await prisma.enrollment.update({
+    where: {
+      Enrollmentno: data.EnrollmentNo,
+    },
+    data: {
+      marksheetLink: link,
+    },
+  });
 
   res.json({ success: true });
 }

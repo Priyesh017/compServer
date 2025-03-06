@@ -6,6 +6,8 @@ import QRCode from "qrcode";
 import sharp from "sharp";
 import axios from "axios";
 import path from "path";
+import { s3 } from ".";
+import { PutObjectCommand } from "@aws-sdk/client-s3";
 
 interface dtype {
   name: string;
@@ -314,7 +316,22 @@ export async function fillCertificate({
 
   // Serialize the document and write it to a file
   const pdfBytes = await pdfDoc.save();
-  fs.writeFileSync("filled_certificate.pdf", pdfBytes);
+  const n = name.split(" ")[0];
+
+  const params = {
+    Bucket: process.env.AWS_BUCKET_NAME,
+    Key: `certifcates/${n}-${totalMarks}.pdf`,
+    Body: pdfBytes,
+    ContentType: "application/pdf",
+  };
+
+  const command = new PutObjectCommand(params);
+  await s3.send(command);
+  const pdfUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/certifcates/${n}-${totalMarks}.pdf`;
+
+  return pdfUrl;
+
+  // fs.writeFileSync("filled_certificate.pdf", pdfBytes);
 }
 
 export async function filladmit({
@@ -441,7 +458,21 @@ export async function filladmit({
     height: 30,
   });
   const pdfBytes = await pdfDoc.save();
-  fs.writeFileSync("filled_admit.pdf", pdfBytes);
+  const n = name.split(" ")[0];
+
+  const params = {
+    Bucket: process.env.AWS_BUCKET_NAME,
+    Key: `certifcates/${n}-${sem}.pdf`,
+    Body: pdfBytes,
+    ContentType: "application/pdf",
+  };
+
+  const command = new PutObjectCommand(params);
+  await s3.send(command);
+  const pdfUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/certifcates/${n}-${sem}.pdf`;
+  return pdfUrl;
+
+  // fs.writeFileSync("filled_admit.pdf", pdfBytes);
 }
 
 export async function fillId({
@@ -596,7 +627,19 @@ export async function fillId({
   });
 
   const pdfBytes = await pdfDoc.save();
-  fs.writeFileSync("filled_id.pdf", pdfBytes);
+  const n = name.split(" ")[0];
+
+  const params = {
+    Bucket: process.env.AWS_BUCKET_NAME,
+    Key: `certifcates/${n}-${IdCardNo}.pdf`,
+    Body: pdfBytes,
+    ContentType: "application/pdf",
+  };
+  const command = new PutObjectCommand(params);
+  await s3.send(command);
+  const pdfUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/certifcates/${n}-${IdCardNo}.pdf`;
+  return pdfUrl;
+  // fs.writeFileSync("filled_id.pdf", pdfBytes);
 }
 
 export async function fillMarksheet(data: MarksheetData) {
@@ -847,8 +890,21 @@ export async function fillMarksheet(data: MarksheetData) {
 
   // Save the PDF
   const pdfBytes = await pdfDoc.save();
-  fs.writeFileSync("filled_Marksheet.pdf", pdfBytes);
+  const n = data.enrollment.name.split(" ")[0];
+
+  const params = {
+    Bucket: process.env.AWS_BUCKET_NAME,
+    Key: `certifcates/${n}-${data.totalMarks}.pdf`,
+    Body: pdfBytes,
+    ContentType: "application/pdf",
+  };
+
+  const command = new PutObjectCommand(params);
+  await s3.send(command);
+  const pdfUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/certifcates/${n}-${data.totalMarks}.pdf`;
+  return pdfUrl;
+  // fs.writeFileSync("filled_Marksheet.pdf", pdfBytes);
 }
 
-async function awsUpload() {}
 // uthate gele komabo
+//idcard no e / thakbe na
