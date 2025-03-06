@@ -445,7 +445,7 @@ export async function fillId({
   });
 
   page.drawText(`ID NO: ${IdCardNo}`, {
-    x: 80,
+    x: 70,
     y: pdfHeight - 1100,
     size: 50,
     color: rgb(0, 0, 0),
