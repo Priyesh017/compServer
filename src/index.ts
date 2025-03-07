@@ -56,6 +56,9 @@ app.get("/generate-presigned-url", async (req, res) => {
     res.status(500).json({ error: err });
   }
 });
+app.get("/temp", (req, res) => {
+  res.json({ answer: "hello" });
+});
 app.use(router);
 
 app.listen(PORT, () => {
