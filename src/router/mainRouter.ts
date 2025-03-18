@@ -29,6 +29,7 @@ import {
   amountFetch,
   FetchAllEnquiry,
   amountEdit,
+  VerifyEnquiry,
 } from "../controller/mainController";
 import { ErrorHandler } from "../errhandling";
 import { centerAuthCheckFn } from "../middleware";
@@ -72,5 +73,6 @@ router.route("/exmmarksDisApprove").post(ErrorHandler(exmmarksDisApprove));
 router.route("/amountFetch").post(centerAuthCheckFn, ErrorHandler(amountFetch));
 router.route("/FetchAllEnquiry").get(ErrorHandler(FetchAllEnquiry));
 router.route("/amountEdit").post(ErrorHandler(amountEdit));
+router.route("/VerifyEnquiry").post(ErrorHandler(VerifyEnquiry));
 
 export default router;

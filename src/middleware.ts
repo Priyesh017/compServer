@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { prisma } from "./client";
+import rateLimit from "express-rate-limit";
 
 interface iuserWithoutPassword {
   id: string;
@@ -51,3 +52,9 @@ export const centerAuthCheckFn = async (
     res.json({ message: "not center admin user" });
   }
 };
+
+export const otpLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 2, // Limit each IP to 3 requests per minute
+  message: { error: "Too many OTP requests. Try again later." },
+});

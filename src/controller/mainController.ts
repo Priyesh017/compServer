@@ -10,8 +10,16 @@ import {
   fillId,
   fillMarksheet,
   formatDateForJS,
+  generateSecurePassword,
   MarksheetData,
 } from "../helper";
+import {
+  sendPasswordResetEmail,
+  sendTemporaryPasswordEmail,
+} from "../emailHelper";
+import crypto from "crypto";
+import bcrypt from "bcryptjs";
+import { redisClient, transporter } from "..";
 
 export async function loginFunc(req: Request, res: Response) {
   try {
@@ -96,7 +104,7 @@ export async function loginCheckFunc(req: Request, res: Response) {
     if (user.eno) {
       const data = await prisma.enrollment.findFirst({
         where: {
-          Enrollmentno: user.eno,
+          Enrollmentno: parseInt(user.eno),
         },
       });
 
@@ -125,7 +133,7 @@ export async function enrollCheck(req: Request, res: Response) {
 
   const val = await prisma.enrollment.findFirst({
     where: {
-      Enrollmentno: no,
+      Enrollmentno: parseInt(no),
     },
   });
 
@@ -147,6 +155,11 @@ export async function createEnrollment(req: Request, res: Response) {
     idno: IdCardNo,
     courseid,
     imageUrl,
+    category,
+    nationality,
+    idProof,
+    idproofNo,
+    sex,
   } = req.body;
 
   const dobUpdated = new Date(dob);
@@ -155,12 +168,18 @@ export async function createEnrollment(req: Request, res: Response) {
   const data = await prisma.enrollment.create({
     data: {
       father,
+      category,
+      nationality,
       mobileNo,
+      idProof,
+      idproofNo,
       mother,
       address,
+      status: "pending",
       dob: dobUpdated,
       name,
       wpNo,
+      sex,
       course: {
         connect: {
           id: parseInt(courseid),
@@ -208,13 +227,11 @@ export async function deActivateEnrollment(req: Request, res: Response) {
 }
 
 export async function createCenter(req: Request, res: Response) {
-  const { locationX, locationY, Centername, adminId, address, code } = req.body;
+  const { Centername, adminId, address, code } = req.body;
 
   // Ensure locationX and locationY are converted to numbers
   const center = await prisma.center.create({
     data: {
-      locationX: parseFloat(locationX), // Convert to float
-      locationY: parseFloat(locationY), // Convert to float
       Centername,
       admin: {
         connect: { id: parseInt(adminId) }, // Ensure adminId is a number
@@ -340,7 +357,7 @@ export async function generateMarksheet(req: Request, res: Response) {
 
   await prisma.enrollment.update({
     where: {
-      Enrollmentno: data.EnrollmentNo,
+      Enrollmentno: parseInt(data.EnrollmentNo),
     },
     data: {
       marksheetLink: link,
@@ -576,13 +593,51 @@ export async function marksheetfetch(req: Request, res: Response) {
   res.json({ success: true, data });
 }
 export async function TakeEnquiry(req: Request, res: Response) {
-  const { name, email, message } = req.body;
+  const {
+    name,
+    email,
+    father,
+    dob,
+    sex,
+    category,
+    nationality,
+    mobile,
+    address,
+    eduqualif,
+    idProof,
+    idproofNo,
+    roomNo,
+    squarefit,
+    tradeLicense,
+    bathroom,
+    signatureLink,
+    stateCoordinator,
+    districtCoordinator,
+    subdistrictCoordinator,
+  } = req.body;
 
   const data = await prisma.enquiry.create({
     data: {
       email,
-      message,
+      father,
+      dob,
+      sex,
+      category,
+      nationality,
+      mobile,
+      address,
       name,
+      eduqualif,
+      idProof,
+      idproofNo,
+      roomNo,
+      squarefit,
+      tradeLicense,
+      bathroom,
+      signatureLink,
+      stateCoordinator,
+      districtCoordinator,
+      subdistrictCoordinator,
     },
   });
 
@@ -686,3 +741,156 @@ export async function amountEdit(req: Request, res: Response) {
 
   res.json({ success: true, data });
 }
+
+export async function VerifyEnquiry(req: Request, res: Response) {
+  //ekta center create hobe and admin assign hobe
+
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
+
+  const { name, email } = req.body;
+
+  function sendUpdate(step: number, message: string) {
+    res.write(`data: ${JSON.stringify({ step, message })}\n\n`);
+  }
+
+  const user = await prisma.user.findFirst({
+    where: {
+      email,
+    },
+  });
+
+  if (user) {
+    res.status(400).json({ message: "User already exists" });
+    return;
+  }
+
+  const Random_Password = generateSecurePassword();
+  const hashedPassword = await Bcrypt.hash(Random_Password, 10);
+
+  //send password to mail
+  sendUpdate(1, "sending mail");
+
+  await sendTemporaryPasswordEmail(email, Random_Password);
+
+  const newUser = await prisma.user.create({
+    data: {
+      email,
+      password: hashedPassword,
+      name,
+    },
+  });
+
+  const data = await prisma.center.create({
+    data: {
+      adminid: newUser.id,
+      address: "",
+      Centername: "",
+    },
+  });
+  sendUpdate(2, "center created");
+
+  res.end();
+}
+
+export async function ChangePassword(req: Request, res: Response) {
+  const { id, password } = req.body;
+
+  const data = await prisma.user.update({
+    where: {
+      id,
+    },
+    data: {
+      password,
+    },
+  });
+
+  res.json({ success: "true" });
+}
+
+export async function SendResetLink(req: Request, res: Response) {
+  const { email } = req.body;
+
+  const user = await prisma.user.findUnique({ where: { email } });
+  if (!user) return res.status(404).json({ message: "User not found" });
+
+  // Generate a secure reset token
+  const resetToken = crypto.randomBytes(32).toString("hex");
+  const resetTokenExpiry = new Date(Date.now() + 3600000); // 1 hour expiry
+
+  await prisma.user.update({
+    where: { email },
+    data: { resetToken, resetTokenExpiry },
+  });
+
+  const resetLink = `http://localhost:3000/reset-password/${resetToken}`;
+
+  await sendPasswordResetEmail(email, resetLink);
+
+  res.json({ message: "Reset password link sent to your email" });
+}
+
+export async function ResetPassword(req: Request, res: Response) {
+  const { token } = req.params;
+  const { newPassword } = req.body;
+
+  const user = await prisma.user.findFirst({
+    where: { resetToken: token, resetTokenExpiry: { gt: new Date() } },
+  });
+
+  if (!user)
+    return res.status(400).json({ message: "Invalid or expired token" });
+
+  const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      password: hashedPassword,
+      resetToken: null,
+      resetTokenExpiry: null,
+    },
+  });
+
+  res.json({ message: "Password reset successful" });
+}
+
+const generateOTP = () => crypto.randomInt(100000, 999999).toString();
+
+export async function otpSend(req: Request, res: Response) {
+  const { email } = req.body;
+  if (!email) return res.status(400).json({ error: "Email is required" });
+
+  const otp = generateOTP();
+  const hashedOtp = await bcrypt.hash(otp, 10);
+
+  await redisClient.setEx(`otp:${email}`, 300, hashedOtp); // Store OTP for 5 mins
+
+  try {
+    await transporter.sendMail({
+      from: `mnyctcofficial@gmail.com`,
+      to: email,
+      subject: "Your OTP Code",
+      text: `Your OTP is: ${otp}. It expires in 5 minutes.`,
+    });
+    res.json({ message: "OTP sent successfully" });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to send OTP" });
+  }
+}
+export async function verify_otp(req: Request, res: Response) {
+  const { email, otp } = req.body;
+  const storedOtp = await redisClient.get(`otp:${email}`);
+
+  if (!storedOtp)
+    return res.status(400).json({ error: "OTP expired or not found" });
+
+  const isMatch = await bcrypt.compare(otp, storedOtp);
+  if (!isMatch) return res.status(400).json({ error: "Invalid OTP" });
+
+  await redisClient.del(`otp:${email}`);
+
+  res.json({ message: "OTP verified" });
+}
+// notice,notes and video upload , otp system,course entry,bank qr egulo possible hocche na

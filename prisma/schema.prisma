@@ -12,30 +12,75 @@ enum Role {
   ADMIN
 }
 
+enum Sex {
+  MALE
+  FEMALE
+  TRANSGENDER
+}
+
+enum Category {
+  SC
+  ST
+  GENERAL
+  OBC
+  PH
+  OTHERS
+}
+
+enum Nationality {
+  INDIAN
+  OTHERS
+}
+
+enum statusType {
+  passout
+  dropout
+  pending
+}
+
+enum IdType {
+  aadhar
+  voter
+  drivingLicense
+}
+
+enum Remark {
+  PASS
+  FAIL
+}
+
+enum Eduqualif {
+  eight
+  madhyamik
+  higherSecondary
+  graduate
+  others
+}
+
 model User {
-  id       Int      @id @default(autoincrement())
-  email    String   @unique
-  name     String
-  role     Role     @default(CENTER)
-  password String
-  Center   Center[] @relation("CenterAdmin")
+  id               Int       @id @default(autoincrement())
+  email            String    @unique
+  name             String
+  role             Role      @default(CENTER)
+  password         String
+  Center           Center[]  @relation("CenterAdmin")
+  resetToken       String?
+  resetTokenExpiry DateTime?
 }
 
 model Center {
   id         Int          @id @default(autoincrement())
   Centername String
-  locationX  Float
-  locationY  Float
   Student    Enrollment[]
   admin      User         @relation("CenterAdmin", fields: [adminid], references: [id], onDelete: Cascade)
   adminid    Int
   address    String
-  code       String
+  code       Int          @default(autoincrement())
 }
 
 model Enrollment {
   id              Int    @id @default(autoincrement())
-  Enrollmentno    String @unique
+  Enrollmentno    Int    @unique @default(autoincrement())
   IdCardNo        String @unique
   idCardLink      String @default("")
   admitLink       String @default("")
@@ -43,16 +88,21 @@ model Enrollment {
   marksheetLink   String @default("")
   imageLink       String @default("")
 
-  name     String
-  dob      DateTime
-  father   String
-  mother   String
-  address  String
-  mobileNo String
-  wpNo     String
+  name        String
+  dob         DateTime
+  father      String
+  mother      String
+  address     String
+  mobileNo    String
+  wpNo        String
+  sex         Sex
+  category    Category
+  nationality Nationality
+  idProof     IdType
+  idproofNo   String
 
-  eduqualification String
-  activated        Boolean @default(false)
+  eduqualification Eduqualif
+  activated        Boolean   @default(false)
 
   examformFillup ExamForm?
   marks          Marks?
@@ -61,19 +111,19 @@ model Enrollment {
   course   Course @relation(fields: [courseId], references: [id])
   courseId Int
 
-  center    Center   @relation(fields: [centerid], references: [id])
+  center    Center     @relation(fields: [centerid], references: [id])
   centerid  Int
-  createdAt DateTime @default(now())
+  createdAt DateTime   @default(now())
+  status    statusType
 
-  @@index([Enrollmentno])
+  @@index([Enrollmentno, status])
 }
 
 model Course {
-  id       Int    @id @default(autoincrement())
-  CName    String
-  price    Int
-  Duration Int
-
+  id         Int          @id @default(autoincrement())
+  CName      String
+  price      Int
+  Duration   Int
   Enrollment Enrollment[]
 }
 
@@ -82,16 +132,15 @@ model Amount {
   TotalPaid            Int
   amountRemain         Int
   lastPaymentRecieptno String?
-  enrollment           Enrollment @relation(fields: [EnrollmentNo], references: [Enrollmentno])
-  EnrollmentNo         String     @unique
+  enrollment           Enrollment @relation(fields: [EnrollmentNo], references: [Enrollmentno], onDelete: Cascade)
+  EnrollmentNo         Int        @unique
   createdAt            DateTime   @default(now())
 }
 
 model ExamForm {
-  id Int @id @default(autoincrement())
-
-  enrollment     Enrollment @relation(fields: [EnrollmentNo], references: [Enrollmentno])
-  EnrollmentNo   String     @unique
+  id             Int        @id @default(autoincrement())
+  enrollment     Enrollment @relation(fields: [EnrollmentNo], references: [Enrollmentno], onDelete: Cascade)
+  EnrollmentNo   Int        @unique
   verified       Boolean    @default(false)
   createdAt      DateTime   @default(now())
   ExamCenterCode String
@@ -107,8 +156,8 @@ model Marks {
   id           Int        @id @default(autoincrement())
   marks        Json
   remarks      Remark
-  enrollment   Enrollment @relation(fields: [EnrollmentNo], references: [Enrollmentno])
-  EnrollmentNo String     @unique
+  enrollment   Enrollment @relation(fields: [EnrollmentNo], references: [Enrollmentno], onDelete: Cascade)
+  EnrollmentNo Int        @unique
   grade        String
   totalMarks   Float
   percentage   Float
@@ -118,15 +167,28 @@ model Marks {
   serialNo     Int        @default(autoincrement())
 }
 
-enum Remark {
-  PASS
-  FAIL
-}
-
 model Enquiry {
-  id        Int      @id @default(autoincrement())
-  name      String
-  email     String
-  message   String
-  createdAt DateTime @default(now())
+  id                     Int         @id @default(autoincrement())
+  name                   String
+  email                  String      @unique
+  father                 String
+  dob                    DateTime
+  sex                    Sex
+  category               Category
+  nationality            Nationality
+  mobile                 String
+  address                String
+  eduqualif              Eduqualif
+  idProof                IdType
+  idproofNo              String
+  roomNo                 Int
+  squarefit              Float
+  tradeLicense           String
+  bathroom               Boolean
+  signatureLink          String
+  stateCoordinator       String
+  districtCoordinator    String
+  subdistrictCoordinator String
+  verified               Boolean     @default(false)
+  createdAt              DateTime    @default(now())
 }

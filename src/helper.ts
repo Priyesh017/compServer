@@ -8,6 +8,7 @@ import axios from "axios";
 import path from "path";
 import { s3 } from ".";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
+import crypto from "crypto";
 
 interface dtype {
   name: string;
@@ -18,7 +19,7 @@ interface dtype {
   course: {
     CName: string;
   };
-  Enrollmentno: string;
+  Enrollmentno: number;
   IdCardNo: string;
   imageLink: string;
   mobileNo: string;
@@ -152,6 +153,17 @@ export const formatDateForJS = (date: string) => {
   const formatted = date.replace(/(\d{2})(\d{2})(\d{4})/, "$3-$2-$1"); // Convert "DDMMYYYY" to "YYYY-MM-DD"
   return new Date(formatted);
 };
+
+function countDigits(num: number) {
+  return Math.abs(num).toString().length;
+}
+export function generateSecurePassword(length = 12) {
+  return crypto
+    .randomBytes(length)
+    .toString("base64") // Convert to a readable format
+    .slice(0, length) // Trim to desired length
+    .replace(/[^a-zA-Z0-9]/g, ""); // Remove special characters
+}
 
 export const accessTokenCookieOptions: CookieOptions = {
   maxAge: 1000 * 60 * 20 * 3 * 12,

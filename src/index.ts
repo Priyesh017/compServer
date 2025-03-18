@@ -7,6 +7,18 @@ import router from "./router/mainRouter";
 import rateLimit from "express-rate-limit";
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import nodemailer from "nodemailer";
+import redis from "redis";
+
+export const redisClient = redis.createClient({ url: process.env.REDISLINK });
+
+export const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: "mnyctcofficial@gmail.com",
+    pass: process.env.PASSWORD_GMAIL,
+  },
+});
 
 const app = express();
 const PORT = 3001;
