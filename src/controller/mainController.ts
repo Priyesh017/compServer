@@ -865,7 +865,7 @@ export async function otpSend(req: Request, res: Response) {
   const otp = generateOTP();
   const hashedOtp = await bcrypt.hash(otp, 10);
 
-  await redisClient.setEx(`otp:${email}`, 300, hashedOtp); // Store OTP for 5 mins
+  await redisClient.setex(`otp:${email}`, 300, hashedOtp); // Store OTP for 5 mins
 
   try {
     await transporter.sendMail({

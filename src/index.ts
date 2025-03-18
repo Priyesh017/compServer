@@ -1,16 +1,21 @@
 import BodyParser from "body-parser";
 import cookieParser from "cookie-parser";
 import cors from "cors";
-import "dotenv/config";
+import dotenv from "dotenv";
 import express from "express";
 import router from "./router/mainRouter";
 import rateLimit from "express-rate-limit";
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import nodemailer from "nodemailer";
-import redis from "redis";
+import redis from "ioredis";
 
-export const redisClient = redis.createClient({ url: process.env.REDISLINK });
+dotenv.config();
+
+export const redisClient = new redis(process.env.REDISLINK!);
+
+redisClient.on("connect", () => console.log("✅ Connected to Redis"));
+redisClient.on("error", (err) => console.error("❌ Redis Error:", err));
 
 export const transporter = nodemailer.createTransport({
   service: "gmail",
