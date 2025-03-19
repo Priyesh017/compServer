@@ -1,132 +1,21 @@
 import Bcrypt from "bcryptjs";
 import { Request, Response } from "express";
-import jwt from "jsonwebtoken";
-import { prisma } from "../client";
+import { prisma } from "../client.js";
 import {
-  accessTokenCookieOptions,
-  Cookiehelper,
   filladmit,
   fillCertificate,
   fillId,
   fillMarksheet,
-  formatDateForJS,
   generateSecurePassword,
   MarksheetData,
-} from "../helper";
+} from "../helper.js";
 import {
   sendPasswordResetEmail,
   sendTemporaryPasswordEmail,
-} from "../emailHelper";
+} from "../emailHelper.js";
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
-import { redisClient, transporter } from "..";
-
-export async function loginFunc(req: Request, res: Response) {
-  try {
-    const { email, password } = req.body;
-
-    // Find the user
-    const user = await prisma.user.findFirst({
-      where: {
-        email,
-      },
-    });
-
-    if (!user) {
-      res.status(200).json({ error: "User not found" });
-      return;
-    }
-
-    if (!user.password) {
-      res.status(200).json({ error: "plz login with your google account" });
-      return;
-    }
-    // Compare passwords
-    const isPasswordValid = await Bcrypt.compare(password, user.password);
-
-    if (!isPasswordValid) {
-      res.status(200).json({ error: "Invalid credentials" });
-      return;
-    }
-
-    Cookiehelper(res, user);
-  } catch (error) {
-    res.status(500).json({ error: "Login failed" });
-  }
-}
-
-export async function signupFunc(req: Request, res: Response) {
-  try {
-    const { name, email, password } = req.body;
-
-    // check if user is already exists
-    const user = await prisma.user.findFirst({
-      where: {
-        email,
-      },
-    });
-    if (user) {
-      res.status(400).json({ message: "User already exists" });
-      return;
-    }
-
-    // Hash the password
-    const hashedPassword = await Bcrypt.hash(password, 10);
-
-    // Save the user to the database
-    const newUser = await prisma.user.create({
-      data: {
-        email,
-        password: hashedPassword,
-        name,
-      },
-    });
-
-    res.status(201).json({ message: "User registered successfully" });
-  } catch (error) {
-    res.status(400).json({ message: "User registration failed" });
-  }
-}
-
-export async function loginCheckFunc(req: Request, res: Response) {
-  try {
-    const { accessToken } = req.signedCookies;
-
-    if (!accessToken) {
-      res.json({ loggedIn: false });
-      return;
-    }
-    const user = jwt.verify(
-      accessToken,
-      process.env.TOKEN_SECRET!
-    ) as jwt.JwtPayload & { eno?: string };
-
-    if (user.eno) {
-      const data = await prisma.enrollment.findFirst({
-        where: {
-          Enrollmentno: parseInt(user.eno),
-        },
-      });
-
-      res.json({ loggedIn: true, user: data });
-      return;
-    }
-
-    res.json({ loggedIn: true, user });
-  } catch (err) {
-    res.json({ loggedIn: false }).status(401);
-  }
-}
-
-export async function logoutfunc(req: Request, res: Response) {
-  res
-    .clearCookie("accessToken", {
-      ...accessTokenCookieOptions,
-      maxAge: 0,
-    })
-
-    .json({ success: true });
-}
+import { redisClient, transporter } from "../index.js";
 
 export async function enrollCheck(req: Request, res: Response) {
   const no = req.query.id as string;
@@ -229,7 +118,12 @@ export async function deActivateEnrollment(req: Request, res: Response) {
 export async function createCenter(req: Request, res: Response) {
   const { Centername, adminId, address, code } = req.body;
 
-  // Ensure locationX and locationY are converted to numbers
+  // Validate input
+  if (!Centername || !adminId || !address || !code) {
+    res.status(400).json({ error: "All fields are required" });
+    return;
+  }
+
   const center = await prisma.center.create({
     data: {
       Centername,
@@ -274,6 +168,7 @@ export async function AllEnrollments(req: Request, res: Response) {
 
 export async function generateCertificate(req: Request, res: Response) {
   const link = await fillCertificate(req.body.data);
+  if (link == undefined) return;
 
   await prisma.enrollment.update({
     where: {
@@ -406,32 +301,6 @@ export async function createCourse(req: Request, res: Response) {
   });
 
   res.json({ success: true, data });
-}
-
-export async function studentLogin(req: Request, res: Response) {
-  const { enrollmentNo, password } = req.body;
-
-  const dob = formatDateForJS(password);
-
-  const data = await prisma.enrollment.findFirst({
-    where: {
-      Enrollmentno: enrollmentNo,
-      dob,
-    },
-  });
-
-  if (!data) {
-    res.json({ success: false });
-    return;
-  }
-
-  const token = jwt.sign({ eno: enrollmentNo }, process.env.TOKEN_SECRET!, {
-    expiresIn: "1h",
-  });
-  res
-    .cookie("accessToken", token, accessTokenCookieOptions)
-    .status(200)
-    .json({ success: true, data });
 }
 
 export async function exmformApprove(req: Request, res: Response) {

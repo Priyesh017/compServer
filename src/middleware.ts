@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
-import { prisma } from "./client";
+import { prisma } from "./client.js";
 import rateLimit from "express-rate-limit";
 
 interface iuserWithoutPassword {

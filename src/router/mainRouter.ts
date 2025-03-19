@@ -1,9 +1,5 @@
 import { Router } from "express";
 import {
-  loginFunc,
-  loginCheckFunc,
-  logoutfunc,
-  signupFunc,
   createCenter,
   AllEnrollments,
   deActivateEnrollment,
@@ -15,7 +11,6 @@ import {
   generateMarksheet,
   generateId,
   createCourse,
-  studentLogin,
   exmformfillupDatafetch,
   exmmarksentry,
   exmformsfetch,
@@ -30,9 +25,16 @@ import {
   FetchAllEnquiry,
   amountEdit,
   VerifyEnquiry,
-} from "../controller/mainController";
-import { ErrorHandler } from "../errhandling";
-import { centerAuthCheckFn } from "../middleware";
+} from "../controller/mainController.js";
+import { ErrorHandler } from "../errhandling.js";
+import { centerAuthCheckFn } from "../middleware.js";
+import {
+  loginFunc,
+  loginCheckFunc,
+  logoutfunc,
+  signupFunc,
+  studentLogin,
+} from "../controller/authController.js";
 
 const router = Router();
 

@@ -6,9 +6,10 @@ import QRCode from "qrcode";
 import sharp from "sharp";
 import axios from "axios";
 import path from "path";
-import { s3 } from ".";
+
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import crypto from "crypto";
+import { s3 } from "./index.js";
 
 interface dtype {
   name: string;
@@ -238,6 +239,8 @@ export async function fillCertificate({
 
   // Get the first page
   const page = pdfDoc.getPages()[0];
+  if (typeof page == "undefined") return;
+
   const pdfHeight = page.getHeight();
 
   // Embed QR Code image
@@ -374,6 +377,8 @@ export async function filladmit({
   const imageBytes2 = fs.readFileSync("files/sign.png");
 
   const page = pdfDoc.getPages()[0];
+  if (typeof page == "undefined") return;
+
   const pdfHeight = page.getHeight();
 
   const image = await pdfDoc.embedJpg(Buffer.from(response.data));
@@ -508,6 +513,8 @@ export async function fillId({
   const pdfDoc = await PDFDocument.load(existingPdfBytes);
   const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
   const page = pdfDoc.getPages()[0];
+  if (typeof page == "undefined") return;
+
   const pdfHeight = page.getHeight();
   const pdfWidth = page.getWidth();
 
@@ -579,13 +586,16 @@ export async function fillId({
     font,
     fontSize,
   }: WrapTextParams): string[] => {
-    const words = text.split(" ");
+    if (!text.trim()) return []; // Handle empty or whitespace-only text
+
+    const words = text.split(/\s+/); // Split on multiple spaces to avoid empty entries
     let lines: string[] = [];
-    let currentLine = words[0];
+    let currentLine = words[0] || ""; // Ensure it's a string
 
     for (let i = 1; i < words.length; i++) {
-      let word = words[i];
-      let width = font.widthOfTextAtSize(`${currentLine} ${word}`, fontSize);
+      const word = words[i] ?? "";
+
+      const width = font.widthOfTextAtSize(`${currentLine} ${word}`, fontSize);
 
       if (width < maxWidth) {
         currentLine += ` ${word}`;
@@ -594,7 +604,8 @@ export async function fillId({
         currentLine = word;
       }
     }
-    lines.push(currentLine);
+
+    if (currentLine) lines.push(currentLine); // Push last line if not empty
     return lines;
   };
 
@@ -665,6 +676,8 @@ export async function fillMarksheet(data: MarksheetData) {
   const existingPdfBytes = fs.readFileSync("files/marksheet.pdf");
   const pdfDoc = await PDFDocument.load(existingPdfBytes);
   const page = pdfDoc.getPages()[0];
+  if (typeof page == "undefined") return;
+
   const pdfHeight = page.getHeight();
   const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold); // Embed bold font
 
@@ -734,12 +747,15 @@ export async function fillMarksheet(data: MarksheetData) {
     size: 12,
     color: rgb(0, 0, 0),
   });
-  page.drawText(data.enrollment.course.Duration.toString().toUpperCase(), {
-    x: 500,
-    y: pdfHeight - 269,
-    size: 12,
-    color: rgb(0, 0, 0),
-  });
+  page.drawText(
+    `${data.enrollment.course.Duration.toString().toUpperCase()} months`,
+    {
+      x: 500,
+      y: pdfHeight - 269,
+      size: 12,
+      color: rgb(0, 0, 0),
+    }
+  );
   page.drawText(data.enrollment.center.Centername.toUpperCase(), {
     x: 130,
     y: pdfHeight - 294,

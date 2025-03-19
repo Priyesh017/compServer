@@ -2,17 +2,22 @@ import BodyParser from "body-parser";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import dotenv from "dotenv";
-import express from "express";
-import router from "./router/mainRouter";
+import express, { NextFunction, Request, Response } from "express";
+import router from "./router/mainRouter.js";
 import rateLimit from "express-rate-limit";
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import nodemailer from "nodemailer";
-import redis from "ioredis";
+import { Redis } from "ioredis";
+import { prisma } from "./client.js";
+import { pino } from "pino";
+import helmet from "helmet";
 
 dotenv.config();
 
-export const redisClient = new redis(process.env.REDISLINK!);
+const logger = pino();
+
+export const redisClient = new Redis(process.env.REDISLINK!);
 
 redisClient.on("connect", () => console.log("✅ Connected to Redis"));
 redisClient.on("error", (err) => console.error("❌ Redis Error:", err));
@@ -41,6 +46,7 @@ export const s3 = new S3Client({
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
   },
 });
+app.use(helmet());
 app.use(generalLimiter);
 app.use(BodyParser.json());
 app.use(cookieParser(process.env.COOKIEP));
@@ -53,9 +59,14 @@ app.use(
 
 app.get("/generate-presigned-url", async (req, res) => {
   try {
-    const fileName = req.query.fileName as string;
+    const { fileName, category } = req.query;
+
     const fileType = req.query.fileType as string;
-    const category = req.query.category as string;
+
+    if (!fileName || !fileType || !category) {
+      res.status(400).json({ error: "Missing required query parameters" });
+      return;
+    }
 
     const Key = `images/${category}/${fileName}`;
 
@@ -78,6 +89,18 @@ app.get("/temp", (req, res) => {
 });
 app.use(router);
 
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
+// ✅ Global Error Handler
+app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+  logger.error(err);
+  res.status(500).json({ error: "Internal Server Error" });
 });
+
+process.on("SIGINT", async () => {
+  logger.info("Shutting down gracefully...");
+  await redisClient.quit();
+  await prisma.$disconnect();
+  process.exit(0);
+});
+
+// ✅ Start Server
+app.listen(PORT, () => logger.info(`🚀 Server running on port ${PORT}`));

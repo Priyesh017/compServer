@@ -1,4 +1,4 @@
-import { transporter } from ".";
+import { transporter } from "./index.js";
 
 export async function sendPasswordResetEmail(
   toEmail: string,
