@@ -49,14 +49,6 @@ enum Remark {
   FAIL
 }
 
-enum Eduqualif {
-  eight
-  madhyamik
-  higherSecondary
-  graduate
-  others
-}
-
 model User {
   id               Int       @id @default(autoincrement())
   email            String    @unique
@@ -81,7 +73,7 @@ model Center {
 model Enrollment {
   id              Int    @id @default(autoincrement())
   Enrollmentno    Int    @unique @default(autoincrement())
-  IdCardNo        String @unique
+  IdCardNo        Int    @unique @default(autoincrement())
   idCardLink      String @default("")
   admitLink       String @default("")
   certificateLink String @default("")
@@ -99,10 +91,10 @@ model Enrollment {
   category    Category
   nationality Nationality
   idProof     IdType
-  idproofNo   String
+  idProofNo   String
 
-  eduqualification Eduqualif
-  activated        Boolean   @default(false)
+  eduqualification String
+  activated        Boolean @default(false)
 
   examformFillup ExamForm?
   marks          Marks?
@@ -172,17 +164,24 @@ model Enquiry {
   name                   String
   email                  String      @unique
   father                 String
+  coName                 String
+  dist                   String
+  state                  String
+  pin                    String
+  ps                     String
+  po                     String
+  vill                   String
   dob                    DateTime
   sex                    Sex
   category               Category
   nationality            Nationality
-  mobile                 String
-  address                String
-  eduqualif              Eduqualif
+  mobileNo               String
+  AddressLine            String
+  eduqualification       String
   idProof                IdType
-  idproofNo              String
-  roomNo                 Int
-  squarefit              Float
+  idProofNo              String
+  houseRoomNo            String
+  squareFit              String
   tradeLicense           String
   bathroom               Boolean
   signatureLink          String

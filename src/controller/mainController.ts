@@ -15,19 +15,8 @@ import {
 } from "../emailHelper.js";
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
-import { redisClient, transporter } from "../index.js";
-
-export async function enrollCheck(req: Request, res: Response) {
-  const no = req.query.id as string;
-
-  const val = await prisma.enrollment.findFirst({
-    where: {
-      Enrollmentno: parseInt(no),
-    },
-  });
-
-  res.json(val);
-}
+import { redisClient } from "../index.js";
+import logger from "../logger.js";
 
 export async function createEnrollment(req: Request, res: Response) {
   //take course id from client
@@ -39,20 +28,18 @@ export async function createEnrollment(req: Request, res: Response) {
     Address: address,
     mobile: mobileNo,
     wapp: wpNo,
-    enrollmentNo: Enrollmentno,
     eduqualification,
-    idno: IdCardNo,
     courseid,
     imageUrl,
     category,
     nationality,
-    idProof,
-    idproofNo,
+    idtype,
+    idProofNo,
     sex,
   } = req.body;
 
   const dobUpdated = new Date(dob);
-  const centerid = Number(req.centerId);
+  const centerid = Number(req.centerId); //already number ache
 
   const data = await prisma.enrollment.create({
     data: {
@@ -60,8 +47,8 @@ export async function createEnrollment(req: Request, res: Response) {
       category,
       nationality,
       mobileNo,
-      idProof,
-      idproofNo,
+      idProof: idtype,
+      idProofNo,
       mother,
       address,
       status: "pending",
@@ -74,9 +61,8 @@ export async function createEnrollment(req: Request, res: Response) {
           id: parseInt(courseid),
         },
       },
-      Enrollmentno,
       eduqualification,
-      IdCardNo,
+
       center: {
         connect: { id: centerid },
       },
@@ -84,7 +70,7 @@ export async function createEnrollment(req: Request, res: Response) {
     },
   });
 
-  res.json({ success: "true", data });
+  res.json({ success: true });
 }
 
 export async function ActivateEnrollment(req: Request, res: Response) {
@@ -98,7 +84,7 @@ export async function ActivateEnrollment(req: Request, res: Response) {
     },
   });
 
-  res.json({ success: true, val });
+  res.json({ success: true });
 }
 
 export async function deActivateEnrollment(req: Request, res: Response) {
@@ -112,7 +98,7 @@ export async function deActivateEnrollment(req: Request, res: Response) {
     },
   });
 
-  res.json({ success: true, val });
+  res.json({ success: true });
 }
 
 export async function createCenter(req: Request, res: Response) {
@@ -131,11 +117,11 @@ export async function createCenter(req: Request, res: Response) {
         connect: { id: parseInt(adminId) }, // Ensure adminId is a number
       },
       address,
-      code,
+      code: parseInt(code),
     },
   });
 
-  res.json(center);
+  res.json({ success: true });
 }
 
 export async function AllEnrollments(req: Request, res: Response) {
@@ -172,7 +158,7 @@ export async function generateCertificate(req: Request, res: Response) {
 
   await prisma.enrollment.update({
     where: {
-      Enrollmentno: req.body.data.EnrollmentNo,
+      Enrollmentno: parseInt(req.body.data.EnrollmentNo),
     },
     data: {
       certificateLink: link,
@@ -186,7 +172,7 @@ export async function generateadmit(req: Request, res: Response) {
 
   await prisma.enrollment.update({
     where: {
-      Enrollmentno: req.body.enrollment.EnrollmentNo,
+      Enrollmentno: parseInt(req.body.enrollment.EnrollmentNo),
     },
     data: {
       admitLink: link,
@@ -200,7 +186,7 @@ export async function generateId(req: Request, res: Response) {
 
   const data = await prisma.enrollment.findFirst({
     where: {
-      Enrollmentno,
+      Enrollmentno: parseInt(Enrollmentno),
     },
     select: {
       address: true,
@@ -231,7 +217,7 @@ export async function generateId(req: Request, res: Response) {
 
   await prisma.enrollment.update({
     where: {
-      Enrollmentno,
+      Enrollmentno: data.Enrollmentno,
     },
     data: {
       idCardLink: link,
@@ -269,7 +255,7 @@ export async function exmformfillupDatafetch(req: Request, res: Response) {
 
   const data = await prisma.enrollment.findFirst({
     where: {
-      Enrollmentno: enrollmentNo,
+      Enrollmentno: parseInt(enrollmentNo),
       centerid,
     },
     include: {
@@ -300,7 +286,7 @@ export async function createCourse(req: Request, res: Response) {
     },
   });
 
-  res.json({ success: true, data });
+  res.json({ success: true });
 }
 
 export async function exmformApprove(req: Request, res: Response) {
@@ -315,7 +301,7 @@ export async function exmformApprove(req: Request, res: Response) {
     },
   });
 
-  res.json({ success: true, data });
+  res.json({ success: true });
 }
 
 export async function exmformDisApprove(req: Request, res: Response) {
@@ -330,7 +316,7 @@ export async function exmformDisApprove(req: Request, res: Response) {
     },
   });
 
-  res.json({ success: true, data });
+  res.json({ success: true });
 }
 
 export async function exmmarksApprove(req: Request, res: Response) {
@@ -345,7 +331,7 @@ export async function exmmarksApprove(req: Request, res: Response) {
     },
   });
 
-  res.json({ success: true, data });
+  res.json({ success: true });
 }
 export async function exmmarksDisApprove(req: Request, res: Response) {
   const { id } = req.body;
@@ -359,18 +345,17 @@ export async function exmmarksDisApprove(req: Request, res: Response) {
     },
   });
 
-  res.json({ success: true, data });
+  res.json({ success: true });
 }
 export async function exmmarksentry(req: Request, res: Response) {
   const { EnrollmentNo, marks, remarks, grade, percentage, totalMarks, year } =
     req.body;
   const p = parseFloat(percentage);
   const tm = parseFloat(totalMarks);
-  console.log(JSON.stringify(req.body));
 
   const data = await prisma.marks.create({
     data: {
-      EnrollmentNo,
+      EnrollmentNo: parseInt(EnrollmentNo),
       marks,
       remarks,
       grade,
@@ -380,7 +365,7 @@ export async function exmmarksentry(req: Request, res: Response) {
     },
   });
 
-  res.json({ success: true, data });
+  res.json({ success: true });
 }
 
 export async function exmformsfetch(req: Request, res: Response) {
@@ -470,13 +455,16 @@ export async function TakeEnquiry(req: Request, res: Response) {
     sex,
     category,
     nationality,
-    mobile,
-    address,
-    eduqualif,
+    mobileNo,
+    address: { AddressLine, vill, po, ps, pin },
+    eduqualification,
+    dist,
+    coName,
+    state,
     idProof,
-    idproofNo,
-    roomNo,
-    squarefit,
+    idProofNo,
+    houseRoomNo,
+    squareFit,
     tradeLicense,
     bathroom,
     signatureLink,
@@ -484,25 +472,37 @@ export async function TakeEnquiry(req: Request, res: Response) {
     districtCoordinator,
     subdistrictCoordinator,
   } = req.body;
+  const bathroomValue = bathroom == "Yes" ? true : false;
+  const dobUpdated = new Date(dob);
 
-  const data = await prisma.enquiry.create({
+  const sx = sex.toUpperCase();
+  const nt = nationality.toUpperCase();
+
+  await prisma.enquiry.create({
     data: {
+      coName,
+      vill,
+      po,
+      pin,
+      ps,
+      dist,
+      state,
       email,
       father,
-      dob,
-      sex,
+      dob: dobUpdated,
+      sex: sx,
       category,
-      nationality,
-      mobile,
-      address,
+      nationality: nt,
+      mobileNo,
+      AddressLine,
       name,
-      eduqualif,
+      eduqualification,
       idProof,
-      idproofNo,
-      roomNo,
-      squarefit,
+      idProofNo,
+      houseRoomNo,
+      squareFit,
       tradeLicense,
-      bathroom,
+      bathroom: bathroomValue,
       signatureLink,
       stateCoordinator,
       districtCoordinator,
@@ -510,7 +510,7 @@ export async function TakeEnquiry(req: Request, res: Response) {
     },
   });
 
-  res.json({ success: true, data });
+  res.json({ success: true });
 }
 export async function FetchAllEnquiry(req: Request, res: Response) {
   const data = await prisma.enquiry.findMany({
@@ -534,7 +534,7 @@ export async function examFormFillup(req: Request, res: Response) {
 
   const data = await prisma.examForm.create({
     data: {
-      EnrollmentNo: enrollmentNo,
+      EnrollmentNo: parseInt(enrollmentNo),
       ATI_CODE,
       ExamCenterCode,
       practExmdate: ped,
@@ -547,14 +547,14 @@ export async function examFormFillup(req: Request, res: Response) {
 
   await prisma.amount.update({
     where: {
-      EnrollmentNo: enrollmentNo,
+      EnrollmentNo: data.EnrollmentNo,
     },
     data: {
       lastPaymentRecieptno: lastpaymentR,
     },
   });
 
-  res.json({ success: true, data });
+  res.json({ success: true });
 }
 
 export async function amountFetch(req: Request, res: Response) {
@@ -586,17 +586,18 @@ export async function amountEdit(req: Request, res: Response) {
   const { EnrollmentNo, tp, ar } = req.body;
   const TotalPaid = parseInt(tp);
   const amountRemain = parseInt(ar);
+  const updatedEnroll = parseInt(EnrollmentNo);
 
   const data = await prisma.amount.upsert({
     where: {
-      EnrollmentNo,
+      EnrollmentNo: updatedEnroll,
     },
     create: {
       TotalPaid,
       amountRemain,
       enrollment: {
         connect: {
-          Enrollmentno: EnrollmentNo,
+          Enrollmentno: updatedEnroll,
         },
       },
     },
@@ -608,7 +609,7 @@ export async function amountEdit(req: Request, res: Response) {
     },
   });
 
-  res.json({ success: true, data });
+  res.json({ success: true });
 }
 
 export async function VerifyEnquiry(req: Request, res: Response) {
@@ -618,49 +619,61 @@ export async function VerifyEnquiry(req: Request, res: Response) {
   res.setHeader("Cache-Control", "no-cache");
   res.setHeader("Connection", "keep-alive");
 
-  const { name, email } = req.body;
+  const name = req.query.name as string;
+  const email = req.query.email as string;
 
   function sendUpdate(step: number, message: string) {
     res.write(`data: ${JSON.stringify({ step, message })}\n\n`);
   }
 
-  const user = await prisma.user.findFirst({
-    where: {
-      email,
-    },
-  });
+  try {
+    const user = await prisma.user.findFirst({
+      where: {
+        email,
+      },
+    });
 
-  if (user) {
-    res.status(400).json({ message: "User already exists" });
-    return;
+    if (user) {
+      sendUpdate(0, "User already exists");
+      res.end(); // End the SSE stream properly
+      return;
+    }
+
+    const Random_Password = generateSecurePassword();
+    const hashedPassword = await Bcrypt.hash(Random_Password, 10);
+
+    //send password to mail
+    sendUpdate(1, "sending mail");
+
+    await sendTemporaryPasswordEmail(email, Random_Password);
+
+    const newUser = await prisma.user.create({
+      data: {
+        email,
+        password: hashedPassword,
+        name,
+      },
+    });
+
+    const data = await prisma.center.create({
+      data: {
+        adminid: newUser.id,
+        address: "",
+        Centername: "",
+      },
+    });
+    sendUpdate(2, "center created");
+    res.end();
+  } catch (error) {
+    logger.error("Error in VerifyEnquiry:", error);
+    sendUpdate(-1, "An error occurred");
+    res.end();
   }
 
-  const Random_Password = generateSecurePassword();
-  const hashedPassword = await Bcrypt.hash(Random_Password, 10);
-
-  //send password to mail
-  sendUpdate(1, "sending mail");
-
-  await sendTemporaryPasswordEmail(email, Random_Password);
-
-  const newUser = await prisma.user.create({
-    data: {
-      email,
-      password: hashedPassword,
-      name,
-    },
+  req.on("close", () => {
+    console.log("Client disconnected");
+    res.end();
   });
-
-  const data = await prisma.center.create({
-    data: {
-      adminid: newUser.id,
-      address: "",
-      Centername: "",
-    },
-  });
-  sendUpdate(2, "center created");
-
-  res.end();
 }
 
 export async function ChangePassword(req: Request, res: Response) {
@@ -675,7 +688,7 @@ export async function ChangePassword(req: Request, res: Response) {
     },
   });
 
-  res.json({ success: "true" });
+  res.json({ success: true });
 }
 
 export async function SendResetLink(req: Request, res: Response) {
@@ -737,12 +750,6 @@ export async function otpSend(req: Request, res: Response) {
   await redisClient.setex(`otp:${email}`, 300, hashedOtp); // Store OTP for 5 mins
 
   try {
-    await transporter.sendMail({
-      from: `mnyctcofficial@gmail.com`,
-      to: email,
-      subject: "Your OTP Code",
-      text: `Your OTP is: ${otp}. It expires in 5 minutes.`,
-    });
     res.json({ message: "OTP sent successfully" });
   } catch (error) {
     res.status(500).json({ error: "Failed to send OTP" });
@@ -762,4 +769,5 @@ export async function verify_otp(req: Request, res: Response) {
 
   res.json({ message: "OTP verified" });
 }
+
 // notice,notes and video upload , otp system,course entry,bank qr egulo possible hocche na

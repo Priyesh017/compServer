@@ -21,7 +21,7 @@ interface dtype {
     CName: string;
   };
   Enrollmentno: number;
-  IdCardNo: string;
+  IdCardNo: number;
   imageLink: string;
   mobileNo: string;
 }

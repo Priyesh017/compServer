@@ -1,4 +1,5 @@
-import { transporter } from "./index.js";
+import { resend } from "./index.js";
+import logger from "./logger.js";
 
 export async function sendPasswordResetEmail(
   toEmail: string,
@@ -72,13 +73,6 @@ export async function sendPasswordResetEmail(
     subject: "Reset Your Password",
     html: htmlTemplate,
   };
-
-  try {
-    const info = await transporter.sendMail(mailOptions);
-    console.log("Email sent:", info.response);
-  } catch (error) {
-    console.error("Error sending email:", error);
-  }
 }
 
 export async function sendTemporaryPasswordEmail(
@@ -161,16 +155,12 @@ export async function sendTemporaryPasswordEmail(
     `;
 
   const mailOptions = {
-    from: "mnyctcofficial@gmail.com", // Sender email
+    from: "noreply@logicnook.site", // Sender email
     to: toEmail, // Recipient email
     subject: "Your Temporary Password",
     html: htmlTemplate,
   };
 
-  try {
-    const info = await transporter.sendMail(mailOptions);
-    console.log("Email sent:", info.response);
-  } catch (error) {
-    console.error("Error sending email:", error);
-  }
+  const data = await resend.emails.send(mailOptions);
+  return data;
 }

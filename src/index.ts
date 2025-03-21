@@ -2,33 +2,26 @@ import BodyParser from "body-parser";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import dotenv from "dotenv";
-import express, { NextFunction, Request, Response } from "express";
+import express, { Request, Response } from "express";
 import router from "./router/mainRouter.js";
 import rateLimit from "express-rate-limit";
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import nodemailer from "nodemailer";
 import { Redis } from "ioredis";
 import { prisma } from "./client.js";
-import { pino } from "pino";
 import helmet from "helmet";
+import logger from "./logger.js";
+import { Resend } from "resend";
+import { sendTemporaryPasswordEmail } from "./emailHelper.js";
+
+export const resend = new Resend(process.env.RESEND_KEY);
 
 dotenv.config();
 
-const logger = pino();
-
 export const redisClient = new Redis(process.env.REDISLINK!);
 
-redisClient.on("connect", () => console.log("✅ Connected to Redis"));
-redisClient.on("error", (err) => console.error("❌ Redis Error:", err));
-
-export const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: "mnyctcofficial@gmail.com",
-    pass: process.env.PASSWORD_GMAIL,
-  },
-});
+redisClient.on("connect", () => logger.info("Connected to Redis"));
+redisClient.on("error", (err) => logger.error("Redis Error:", err));
 
 const app = express();
 const PORT = 3001;
@@ -84,23 +77,29 @@ app.get("/generate-presigned-url", async (req, res) => {
     res.status(500).json({ error: err });
   }
 });
-app.get("/temp", (req, res) => {
-  res.json({ answer: "hello" });
+
+app.get("/health", (_, res) => {
+  res.json({ status: "ok" });
 });
+
+app.post("/log", (req, res) => {
+  logger.info(req.body.message);
+  res.sendStatus(200);
+});
+
 app.use(router);
 
-// ✅ Global Error Handler
-app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+app.use((err: any, _: Request, res: Response) => {
   logger.error(err);
   res.status(500).json({ error: "Internal Server Error" });
 });
 
 process.on("SIGINT", async () => {
-  logger.info("Shutting down gracefully...");
+  logger.error("Shutting down gracefully...");
   await redisClient.quit();
   await prisma.$disconnect();
   process.exit(0);
 });
 
 // ✅ Start Server
-app.listen(PORT, () => logger.info(`🚀 Server running on port ${PORT}`));
+app.listen(PORT, () => logger.info(`Server running on port ${PORT}`));

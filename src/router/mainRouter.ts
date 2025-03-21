@@ -5,7 +5,6 @@ import {
   deActivateEnrollment,
   ActivateEnrollment,
   createEnrollment,
-  enrollCheck,
   generateCertificate,
   generateadmit,
   generateMarksheet,
@@ -27,7 +26,7 @@ import {
   VerifyEnquiry,
 } from "../controller/mainController.js";
 import { ErrorHandler } from "../errhandling.js";
-import { centerAuthCheckFn } from "../middleware.js";
+import { adminAuthCheckFn, centerAuthCheckFn } from "../middleware.js";
 import {
   loginFunc,
   loginCheckFunc,
@@ -37,44 +36,65 @@ import {
 } from "../controller/authController.js";
 
 const router = Router();
-
+// auth route
 router.route("/loginRoute").post(loginFunc);
 router.route("/loginCheckRoute").get(loginCheckFunc);
 router.route("/logout").get(ErrorHandler(logoutfunc));
 router.route("/signupRoute").post(signupFunc);
+router.route("/studentLogin").post(ErrorHandler(studentLogin));
 
 router.route("/createCenter").post(ErrorHandler(createCenter));
 router
   .route("/AllEnrollments")
   .get(centerAuthCheckFn, ErrorHandler(AllEnrollments));
-router.route("/deActivateEnrollment").post(ErrorHandler(deActivateEnrollment));
-router.route("/ActivateEnrollment").post(ErrorHandler(ActivateEnrollment));
 router
   .route("/createEnrollment")
   .post(centerAuthCheckFn, ErrorHandler(createEnrollment));
-router.route("/enrollCheck").post(ErrorHandler(enrollCheck));
 router.route("/createCourse").post(ErrorHandler(createCourse));
-
-router.route("/generateCertificate").post(ErrorHandler(generateCertificate));
-router.route("/generateadmit").post(ErrorHandler(generateadmit));
-router.route("/generateMarksheet").post(ErrorHandler(generateMarksheet));
-router.route("/generateId").post(ErrorHandler(generateId));
-router.route("/studentLogin").post(ErrorHandler(studentLogin));
 router
   .route("/exmformfillupDatafetch")
   .post(centerAuthCheckFn, ErrorHandler(exmformfillupDatafetch));
 router.route("/exmmarksentry").post(ErrorHandler(exmmarksentry));
 router.route("/exmformsfetch").get(ErrorHandler(exmformsfetch));
 router.route("/marksheetfetch").get(ErrorHandler(marksheetfetch));
-router.route("/exmformDisApprove").post(ErrorHandler(exmformDisApprove));
-router.route("/exmmarksApprove").post(ErrorHandler(exmmarksApprove));
 router.route("/TakeEnquiry").post(ErrorHandler(TakeEnquiry));
 router.route("/examFormFillup").post(ErrorHandler(examFormFillup));
-router.route("/exmformApprove").post(ErrorHandler(exmformApprove));
-router.route("/exmmarksDisApprove").post(ErrorHandler(exmmarksDisApprove));
 router.route("/amountFetch").post(centerAuthCheckFn, ErrorHandler(amountFetch));
 router.route("/FetchAllEnquiry").get(ErrorHandler(FetchAllEnquiry));
 router.route("/amountEdit").post(ErrorHandler(amountEdit));
-router.route("/VerifyEnquiry").post(ErrorHandler(VerifyEnquiry));
+
+//admin router
+
+router
+  .route("/VerifyEnquiry")
+  .get(adminAuthCheckFn, ErrorHandler(VerifyEnquiry));
+router
+  .route("/exmformApprove")
+  .post(adminAuthCheckFn, ErrorHandler(exmformApprove));
+router
+  .route("/exmformDisApprove")
+  .post(adminAuthCheckFn, ErrorHandler(exmformDisApprove));
+router
+  .route("/exmmarksApprove")
+  .post(adminAuthCheckFn, ErrorHandler(exmmarksApprove));
+router
+  .route("/exmmarksDisApprove")
+  .post(adminAuthCheckFn, ErrorHandler(exmmarksDisApprove));
+router
+  .route("/generateCertificate")
+  .post(adminAuthCheckFn, ErrorHandler(generateCertificate));
+router
+  .route("/generateadmit")
+  .post(adminAuthCheckFn, ErrorHandler(generateadmit));
+router
+  .route("/generateMarksheet")
+  .post(adminAuthCheckFn, ErrorHandler(generateMarksheet));
+router.route("/generateId").post(adminAuthCheckFn, ErrorHandler(generateId));
+router
+  .route("/deActivateEnrollment")
+  .post(adminAuthCheckFn, ErrorHandler(deActivateEnrollment));
+router
+  .route("/ActivateEnrollment")
+  .post(adminAuthCheckFn, ErrorHandler(ActivateEnrollment));
 
 export default router;
