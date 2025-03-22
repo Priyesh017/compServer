@@ -18,7 +18,7 @@ export const resend = new Resend(process.env.RESEND_KEY);
 
 dotenv.config();
 
-export const redisClient = new Redis(process.env.REDISLINK!);
+export const redisClient = new Redis(process.env.REDIS_UPSTASH!);
 
 redisClient.on("connect", () => logger.info("Connected to Redis"));
 redisClient.on("error", (err) => logger.error("Redis Error:", err));
@@ -39,6 +39,7 @@ export const s3 = new S3Client({
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
   },
 });
+
 app.use(helmet());
 app.use(generalLimiter);
 app.use(BodyParser.json());
@@ -55,13 +56,14 @@ app.get("/generate-presigned-url", async (req, res) => {
     const { fileName, category } = req.query;
 
     const fileType = req.query.fileType as string;
+    const keypart = fileType.split("/")[0];
 
     if (!fileName || !fileType || !category) {
       res.status(400).json({ error: "Missing required query parameters" });
       return;
     }
 
-    const Key = `images/${category}/${fileName}`;
+    const Key = `${keypart}s/${category}/${fileName}`;
 
     const command = new PutObjectCommand({
       Bucket: process.env.AWS_BUCKET_NAME,
@@ -87,11 +89,23 @@ app.post("/log", (req, res) => {
   res.sendStatus(200);
 });
 
+app.get("/mailsend", async (req, res) => {
+  const data = await sendTemporaryPasswordEmail(
+    "khandanimai4@gmail.com",
+    "mainak3"
+  );
+  res.json({ data });
+});
+
 app.use(router);
+
+app.use((_, res, next) => {
+  res.status(404).json({ error: "Route not found" });
+});
 
 app.use((err: any, _: Request, res: Response) => {
   logger.error(err);
-  res.status(500).json({ error: "Internal Server Error" });
+  res.json({ error: "Internal Server Error" });
 });
 
 process.on("SIGINT", async () => {

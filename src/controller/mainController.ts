@@ -770,4 +770,20 @@ export async function verify_otp(req: Request, res: Response) {
   res.json({ message: "OTP verified" });
 }
 
-// notice,notes and video upload , otp system,course entry,bank qr egulo possible hocche na
+// notice,notes
+export async function courseAdd(req: Request, res: Response) {
+  const { subjects, id } = req.body;
+
+  await prisma.course.update({
+    where: {
+      id: parseInt(id),
+    },
+    data: {
+      subjects,
+    },
+  });
+}
+
+export async function noticeAdd(req: Request, res: Response) {
+  const {} = req.body;
+}

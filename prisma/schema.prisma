@@ -117,6 +117,7 @@ model Course {
   price      Int
   Duration   Int
   Enrollment Enrollment[]
+  subjects   Json?
 }
 
 model Amount {
@@ -190,4 +191,11 @@ model Enquiry {
   subdistrictCoordinator String
   verified               Boolean     @default(false)
   createdAt              DateTime    @default(now())
+}
+
+model Notices {
+  id      Int      @id @default(autoincrement())
+  heading String
+  body    String
+  upto    DateTime
 }
