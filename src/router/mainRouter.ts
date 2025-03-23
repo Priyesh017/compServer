@@ -24,6 +24,12 @@ import {
   FetchAllEnquiry,
   amountEdit,
   VerifyEnquiry,
+  noticecreate,
+  noticefetch,
+  subjectAdd,
+  ResetPassword,
+  ChangePassword,
+  SendResetLink,
 } from "../controller/mainController.js";
 import { ErrorHandler } from "../errhandling.js";
 import { adminAuthCheckFn, centerAuthCheckFn } from "../middleware.js";
@@ -62,6 +68,13 @@ router.route("/examFormFillup").post(ErrorHandler(examFormFillup));
 router.route("/amountFetch").post(centerAuthCheckFn, ErrorHandler(amountFetch));
 router.route("/FetchAllEnquiry").get(ErrorHandler(FetchAllEnquiry));
 router.route("/amountEdit").post(ErrorHandler(amountEdit));
+
+router.route("/noticecreate").post(ErrorHandler(noticecreate));
+router.route("/noticefetch").get(ErrorHandler(noticefetch));
+router.route("/ResetPassword").post(ErrorHandler(ResetPassword));
+router.route("/ChangePassword").post(ErrorHandler(ChangePassword));
+router.route("/SendResetLink").post(ErrorHandler(SendResetLink));
+router.route("/subjectAdd").post(ErrorHandler(subjectAdd));
 
 //admin router
 

@@ -1,5 +1,4 @@
 import { resend } from "./index.js";
-import logger from "./logger.js";
 
 export async function sendPasswordResetEmail(
   toEmail: string,
@@ -68,11 +67,13 @@ export async function sendPasswordResetEmail(
   `;
 
   const mailOptions = {
-    from: "mnyctcofficial@gmail.com", // Sender email
+    from: "noreply@logicnook.site", // Sender email
     to: toEmail, // Recipient email
     subject: "Reset Your Password",
     html: htmlTemplate,
   };
+
+  await resend.emails.send(mailOptions);
 }
 
 export async function sendTemporaryPasswordEmail(

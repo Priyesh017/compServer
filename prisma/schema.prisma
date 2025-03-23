@@ -117,7 +117,7 @@ model Course {
   price      Int
   Duration   Int
   Enrollment Enrollment[]
-  subjects   Json?
+  subjects   String[]
 }
 
 model Amount {

@@ -23,11 +23,6 @@ export async function loginFunc(req: Request, res: Response) {
       res.status(200).json({ error: "User not found" });
       return;
     }
-
-    if (!user.password) {
-      res.status(200).json({ error: "plz login with your google account" });
-      return;
-    }
     // Compare passwords
     const isPasswordValid = await Bcrypt.compare(password, user.password);
 
@@ -122,7 +117,7 @@ export async function studentLogin(req: Request, res: Response) {
 
   const data = await prisma.enrollment.findFirst({
     where: {
-      Enrollmentno: enrollmentNo,
+      Enrollmentno: parseInt(enrollmentNo),
       dob,
     },
   });

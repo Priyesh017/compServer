@@ -143,6 +143,7 @@ export async function AllEnrollments(req: Request, res: Response) {
       name: true,
       createdAt: true,
       Enrollmentno: true,
+      status: true,
       id: true,
       activated: true, // Ensure activated field is included
     },
@@ -238,7 +239,7 @@ export async function generateMarksheet(req: Request, res: Response) {
 
   await prisma.enrollment.update({
     where: {
-      Enrollmentno: parseInt(data.EnrollmentNo),
+      Enrollmentno: data.EnrollmentNo,
     },
     data: {
       marksheetLink: link,
@@ -267,6 +268,7 @@ export async function exmformfillupDatafetch(req: Request, res: Response) {
       course: {
         select: {
           CName: true,
+          subjects: true,
         },
       },
     },
@@ -671,23 +673,42 @@ export async function VerifyEnquiry(req: Request, res: Response) {
   }
 
   req.on("close", () => {
-    console.log("Client disconnected");
+    logger.info("Client disconnected");
     res.end();
   });
 }
 
 export async function ChangePassword(req: Request, res: Response) {
-  const { id, password } = req.body;
+  const { oldPassword, newPassword, email } = req.body;
 
-  const data = await prisma.user.update({
+  const data = await prisma.user.findFirst({
     where: {
-      id,
-    },
-    data: {
-      password,
+      email,
     },
   });
 
+  if (!data) {
+    res.json({ message: "no user found" });
+    return;
+  }
+
+  const isPasswordValid = await Bcrypt.compare(oldPassword, data.password);
+
+  if (!isPasswordValid) {
+    res.status(200).json({ error: "Invalid credentials" });
+    return;
+  }
+
+  const hashedPassword = await Bcrypt.hash(newPassword, 10);
+
+  await prisma.user.update({
+    where: {
+      id: data.id,
+    },
+    data: {
+      password: hashedPassword,
+    },
+  });
   res.json({ success: true });
 }
 
@@ -695,7 +716,10 @@ export async function SendResetLink(req: Request, res: Response) {
   const { email } = req.body;
 
   const user = await prisma.user.findUnique({ where: { email } });
-  if (!user) return res.status(404).json({ message: "User not found" });
+  if (!user) {
+    res.status(404).json({ message: "User not found" });
+    return;
+  }
 
   // Generate a secure reset token
   const resetToken = crypto.randomBytes(32).toString("hex");
@@ -706,11 +730,14 @@ export async function SendResetLink(req: Request, res: Response) {
     data: { resetToken, resetTokenExpiry },
   });
 
-  const resetLink = `http://localhost:3000/reset-password/${resetToken}`;
+  const resetLink = `${process.env.CORSORIGIN}/resetpassword?token=${resetToken}`;
 
   await sendPasswordResetEmail(email, resetLink);
 
-  res.json({ message: "Reset password link sent to your email" });
+  res.json({
+    success: true,
+    message: "Reset password link sent to your email",
+  });
 }
 
 export async function ResetPassword(req: Request, res: Response) {
@@ -721,8 +748,10 @@ export async function ResetPassword(req: Request, res: Response) {
     where: { resetToken: token, resetTokenExpiry: { gt: new Date() } },
   });
 
-  if (!user)
-    return res.status(400).json({ message: "Invalid or expired token" });
+  if (!user) {
+    res.status(400).json({ message: "Invalid or expired token" });
+    return;
+  }
 
   const hashedPassword = await bcrypt.hash(newPassword, 10);
 
@@ -735,55 +764,62 @@ export async function ResetPassword(req: Request, res: Response) {
     },
   });
 
-  res.json({ message: "Password reset successful" });
+  res.json({ success: true, message: "Password reset successful" });
 }
 
-const generateOTP = () => crypto.randomInt(100000, 999999).toString();
+export async function subjectAdd(req: Request, res: Response) {
+  const { c } = req.body;
+  const data = JSON.parse(c);
 
-export async function otpSend(req: Request, res: Response) {
-  const { email } = req.body;
-  if (!email) return res.status(400).json({ error: "Email is required" });
-
-  const otp = generateOTP();
-  const hashedOtp = await bcrypt.hash(otp, 10);
-
-  await redisClient.setex(`otp:${email}`, 300, hashedOtp); // Store OTP for 5 mins
-
-  try {
-    res.json({ message: "OTP sent successfully" });
-  } catch (error) {
-    res.status(500).json({ error: "Failed to send OTP" });
-  }
-}
-export async function verify_otp(req: Request, res: Response) {
-  const { email, otp } = req.body;
-  const storedOtp = await redisClient.get(`otp:${email}`);
-
-  if (!storedOtp)
-    return res.status(400).json({ error: "OTP expired or not found" });
-
-  const isMatch = await bcrypt.compare(otp, storedOtp);
-  if (!isMatch) return res.status(400).json({ error: "Invalid OTP" });
-
-  await redisClient.del(`otp:${email}`);
-
-  res.json({ message: "OTP verified" });
-}
-
-// notice,notes
-export async function courseAdd(req: Request, res: Response) {
-  const { subjects, id } = req.body;
+  const key = Object.keys(data)[0] as string;
+  const subjects = data[key];
 
   await prisma.course.update({
     where: {
-      id: parseInt(id),
+      id: parseInt(key),
     },
     data: {
       subjects,
     },
   });
+
+  res.json({ success: true });
 }
 
-export async function noticeAdd(req: Request, res: Response) {
-  const {} = req.body;
+export async function noticefetch(req: Request, res: Response) {
+  try {
+    const cacheKey = "notices";
+    const cachedData = await redisClient.get(cacheKey);
+
+    if (cachedData) {
+      res.json(JSON.parse(cachedData));
+      return;
+    }
+
+    const notices = await prisma.notices.findMany({
+      where: { upto: { gt: new Date() } },
+      orderBy: { upto: "desc" },
+    });
+
+    await redisClient.set(cacheKey, JSON.stringify(notices), "EX", 3600 * 24); // Cache for 1 hour
+    res.json(notices);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch notices" });
+  }
+}
+
+export async function noticecreate(req: Request, res: Response) {
+  const { subject: heading, details: body, expiryDate: upto } = req.body;
+
+  await prisma.notices.create({
+    data: {
+      body,
+      heading,
+      upto: new Date(upto),
+    },
+  });
+
+  await redisClient.del("notices");
+
+  res.json({ success: true });
 }

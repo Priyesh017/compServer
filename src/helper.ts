@@ -10,6 +10,12 @@ import path from "path";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import crypto from "crypto";
 import { s3 } from "./index.js";
+import { fileURLToPath } from "url";
+import { dirname } from "path";
+import logger from "./logger.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 interface dtype {
   name: string;
@@ -36,7 +42,7 @@ interface iData {
     practicalFullMarks: string;
   }[];
   remarks: string;
-  EnrollmentNo: string;
+  EnrollmentNo: number;
   grade: string;
   totalMarks: number;
   percentage: number;
@@ -60,7 +66,7 @@ interface iData {
 }
 type DataItem = {
   id: number;
-  EnrollmentNo: string;
+  EnrollmentNo: number;
   verified: boolean;
   createdAt: string;
   ExamCenterCode: string;
@@ -98,7 +104,7 @@ export type MarksheetData = {
     imageLink: string;
     center: {
       Centername: string;
-      code: string;
+      code: number;
       address: string;
     };
     course: {
@@ -118,36 +124,41 @@ export type MarksheetData = {
 
   percentage: number;
   grade: string;
-  EnrollmentNo: string;
+  EnrollmentNo: number;
   remarks: string;
   totalMarks: number;
 };
 
 const RADIUS = 470;
 async function makeCircularImage(imageLink: string) {
-  const tempPath = path.join(__dirname, "..", "tempid.jpg");
-  const outputPath = path.join(__dirname, "..", "circle.png");
+  try {
+    const tempPath = path.join(__dirname, "..", "tempid.jpg");
+    const outputPath = path.join(__dirname, "..", "circle.png");
 
-  // Download image
-  const response = await axios({
-    url: imageLink,
-    responseType: "arraybuffer", // Download as buffer
-  });
-  fs.writeFileSync(tempPath, Buffer.from(response.data));
+    // Download image
+    const response = await axios({
+      url: imageLink,
+      responseType: "arraybuffer", // Download as buffer
+    });
 
-  // Create a circular mask with a fixed size
-  const circleMask = Buffer.from(`
-    <svg width="${RADIUS * 2}" height="${RADIUS * 2}">
-      <circle cx="${RADIUS}" cy="${RADIUS}" r="${RADIUS}" fill="white"/>
-    </svg>
-  `);
+    fs.writeFileSync(tempPath, Buffer.from(response.data));
 
-  // Apply the circular mask with a fixed radius
-  await sharp(tempPath)
-    .resize(RADIUS * 2, RADIUS * 2) // Resize to fixed size
-    .composite([{ input: circleMask, blend: "dest-in" }]) // Apply mask
-    .png() // Output as PNG to keep transparency
-    .toFile(outputPath);
+    // Create a circular mask with a fixed size
+    const circleMask = Buffer.from(`
+      <svg width="${RADIUS * 2}" height="${RADIUS * 2}">
+        <circle cx="${RADIUS}" cy="${RADIUS}" r="${RADIUS}" fill="white"/>
+      </svg>
+    `);
+
+    // Apply the circular mask with a fixed radius
+    await sharp(tempPath)
+      .resize(RADIUS * 2, RADIUS * 2) // Resize to fixed size
+      .composite([{ input: circleMask, blend: "dest-in" }]) // Apply mask
+      .png() // Output as PNG to keep transparency
+      .toFile(outputPath);
+  } catch (error) {
+    logger.error(error);
+  }
 }
 
 export const formatDateForJS = (date: string) => {
@@ -217,137 +228,141 @@ export async function fillCertificate({
   },
   EnrollmentNo,
 }: iData) {
-  const studentData = {
-    Name: name,
-    EnrollmentNo,
-    CourseName: CName,
-    Centername,
-    totalMarks,
-  };
+  try {
+    const studentData = {
+      Name: name,
+      EnrollmentNo,
+      CourseName: CName,
+      Centername,
+      totalMarks,
+    };
 
-  const qrText = JSON.stringify(studentData);
-  const qrCodeBuffer = await QRCode.toBuffer(qrText);
+    const qrText = JSON.stringify(studentData);
+    const qrCodeBuffer = await QRCode.toBuffer(qrText);
 
-  const existingPdfBytes = fs.readFileSync("files/certificate.pdf");
-  const pdfDoc = await PDFDocument.load(existingPdfBytes);
+    const existingPdfBytes = fs.readFileSync("files/certificate.pdf");
+    const pdfDoc = await PDFDocument.load(existingPdfBytes);
 
-  const response = await axios({
-    url: imageLink,
-    responseType: "arraybuffer", // Download as buffer
-  });
-  const Image = await pdfDoc.embedJpg(Buffer.from(response.data));
+    const response = await axios({
+      url: imageLink,
+      responseType: "arraybuffer", // Download as buffer
+    });
+    const Image = await pdfDoc.embedJpg(Buffer.from(response.data));
 
-  // Get the first page
-  const page = pdfDoc.getPages()[0];
-  if (typeof page == "undefined") return;
+    // Get the first page
+    const page = pdfDoc.getPages()[0];
+    if (typeof page == "undefined") return;
 
-  const pdfHeight = page.getHeight();
+    const pdfHeight = page.getHeight();
 
-  // Embed QR Code image
-  const qrImage = await pdfDoc.embedPng(qrCodeBuffer);
-  const { width, height } = qrImage.scale(0.3); // Adjust QR size
+    // Embed QR Code image
+    const qrImage = await pdfDoc.embedPng(qrCodeBuffer);
+    const { width, height } = qrImage.scale(0.3); // Adjust QR size
 
-  // Position QR Code (adjust x, y as needed)
+    // Position QR Code (adjust x, y as needed)
 
-  page.drawImage(qrImage, {
-    x: 50, // Adjust X position
-    y: pdfHeight - 220, // Adjust Y position (PDF starts from bottom-left)
-    width,
-    height,
-  });
+    page.drawImage(qrImage, {
+      x: 50, // Adjust X position
+      y: pdfHeight - 220, // Adjust Y position (PDF starts from bottom-left)
+      width,
+      height,
+    });
 
-  // Draw the image at a specific position (x, y)
-  page.drawImage(Image, {
-    x: 475, // Adjust X position
-    y: pdfHeight - 220, // Adjust Y position (PDF coordinates start from bottom-left)
-    width,
-    height,
-  });
-  // Set font size and position
-  const fontSize = 18;
-  page.drawText("123456", {
-    x: 371,
-    y: pdfHeight - 32,
-    size: 12,
-    color: rgb(0, 0, 0),
-  });
-  page.drawText(name, {
-    x: 231,
-    y: pdfHeight - 265,
-    size: fontSize,
-    color: rgb(0, 0, 0),
-  });
+    // Draw the image at a specific position (x, y)
+    page.drawImage(Image, {
+      x: 475, // Adjust X position
+      y: pdfHeight - 220, // Adjust Y position (PDF coordinates start from bottom-left)
+      width,
+      height,
+    });
+    // Set font size and position
+    const fontSize = 18;
+    page.drawText("123456", {
+      x: 371,
+      y: pdfHeight - 32,
+      size: 12,
+      color: rgb(0, 0, 0),
+    });
+    page.drawText(name, {
+      x: 231,
+      y: pdfHeight - 265,
+      size: fontSize,
+      color: rgb(0, 0, 0),
+    });
 
-  page.drawText(father, {
-    x: 248,
-    y: pdfHeight - 291,
-    size: fontSize,
-    color: rgb(0, 0, 0),
-  });
-  page.drawText(CName, {
-    x: 153,
-    y: pdfHeight - 341,
-    size: fontSize,
-    color: rgb(0, 0, 0),
-  });
+    page.drawText(father, {
+      x: 248,
+      y: pdfHeight - 291,
+      size: fontSize,
+      color: rgb(0, 0, 0),
+    });
+    page.drawText(CName, {
+      x: 153,
+      y: pdfHeight - 341,
+      size: fontSize,
+      color: rgb(0, 0, 0),
+    });
 
-  page.drawText(`${Duration.toString()} months`, {
-    x: 145,
-    y: pdfHeight - 367,
-    size: fontSize,
-    color: rgb(0, 0, 0),
-  });
+    page.drawText(`${Duration.toString()} months`, {
+      x: 145,
+      y: pdfHeight - 367,
+      size: fontSize,
+      color: rgb(0, 0, 0),
+    });
 
-  page.drawText(year, {
-    x: 472,
-    y: pdfHeight - 367,
-    size: 15,
-    color: rgb(0, 0, 0),
-  });
-  page.drawText(grade, {
-    x: 261,
-    y: pdfHeight - 392,
-    size: fontSize,
-    color: rgb(0, 0, 0),
-  });
-  page.drawText(EnrollmentNo, {
-    x: 483,
-    y: pdfHeight - 392,
-    size: 15,
-    color: rgb(0, 0, 0),
-  });
-  page.drawText(Centername, {
-    x: 218,
-    y: pdfHeight - 417,
-    size: 16,
-    color: rgb(0, 0, 0),
-  });
+    page.drawText(year, {
+      x: 472,
+      y: pdfHeight - 367,
+      size: 15,
+      color: rgb(0, 0, 0),
+    });
+    page.drawText(grade, {
+      x: 261,
+      y: pdfHeight - 392,
+      size: fontSize,
+      color: rgb(0, 0, 0),
+    });
+    page.drawText(EnrollmentNo.toString(), {
+      x: 483,
+      y: pdfHeight - 392,
+      size: 15,
+      color: rgb(0, 0, 0),
+    });
+    page.drawText(Centername, {
+      x: 218,
+      y: pdfHeight - 417,
+      size: 16,
+      color: rgb(0, 0, 0),
+    });
 
-  page.drawText(new Date(Date.now()).toLocaleDateString(), {
-    x: 249,
-    y: pdfHeight - 445,
-    size: fontSize,
-    color: rgb(0, 0, 0),
-  });
+    page.drawText(new Date(Date.now()).toLocaleDateString(), {
+      x: 249,
+      y: pdfHeight - 445,
+      size: fontSize,
+      color: rgb(0, 0, 0),
+    });
 
-  // Serialize the document and write it to a file
-  const pdfBytes = await pdfDoc.save();
-  const n = name.split(" ")[0];
+    // Serialize the document and write it to a file
+    const pdfBytes = await pdfDoc.save();
+    const n = name.split(" ")[0];
 
-  const params = {
-    Bucket: process.env.AWS_BUCKET_NAME,
-    Key: `certificates/${n}-${totalMarks}.pdf`,
-    Body: pdfBytes,
-    ContentType: "application/pdf",
-  };
+    const params = {
+      Bucket: process.env.AWS_BUCKET_NAME,
+      Key: `certificates/${n}-${totalMarks}.pdf`,
+      Body: pdfBytes,
+      ContentType: "application/pdf",
+    };
 
-  const command = new PutObjectCommand(params);
-  await s3.send(command);
-  const pdfUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/certificates/${n}-${totalMarks}.pdf`;
+    const command = new PutObjectCommand(params);
+    await s3.send(command);
+    const pdfUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/certificates/${n}-${totalMarks}.pdf`;
 
-  return pdfUrl;
+    return pdfUrl;
 
-  // fs.writeFileSync("filled_certificate.pdf", pdfBytes);
+    // fs.writeFileSync("filled_certificate.pdf", pdfBytes);
+  } catch (error) {
+    logger.error(error);
+  }
 }
 
 export async function filladmit({
@@ -366,137 +381,141 @@ export async function filladmit({
   theoryExmtime,
   sem,
 }: DataItem) {
-  const existingPdfBytes = fs.readFileSync("files/admit.pdf");
-  const pdfDoc = await PDFDocument.load(existingPdfBytes);
+  try {
+    const existingPdfBytes = fs.readFileSync("files/admit.pdf");
+    const pdfDoc = await PDFDocument.load(existingPdfBytes);
 
-  const response = await axios({
-    url: imageLink,
-    responseType: "arraybuffer", // Download as buffer
-  });
+    const response = await axios({
+      url: imageLink,
+      responseType: "arraybuffer", // Download as buffer
+    });
 
-  const imageBytes2 = fs.readFileSync("files/sign.png");
+    const imageBytes2 = fs.readFileSync("files/sign.png");
 
-  const page = pdfDoc.getPages()[0];
-  if (typeof page == "undefined") return;
+    const page = pdfDoc.getPages()[0];
+    if (typeof page == "undefined") return;
 
-  const pdfHeight = page.getHeight();
+    const pdfHeight = page.getHeight();
 
-  const image = await pdfDoc.embedJpg(Buffer.from(response.data));
-  const image2 = await pdfDoc.embedPng(imageBytes2);
+    const image = await pdfDoc.embedJpg(Buffer.from(response.data));
+    const image2 = await pdfDoc.embedPng(imageBytes2);
 
-  page.drawText(EnrollmentNo, {
-    x: 165,
-    y: pdfHeight - 156,
-    size: 13,
-    color: rgb(0, 0, 0),
-  });
+    page.drawText(EnrollmentNo.toString(), {
+      x: 165,
+      y: pdfHeight - 156,
+      size: 13,
+      color: rgb(0, 0, 0),
+    });
 
-  page.drawText(name, {
-    x: 165,
-    y: pdfHeight - 173,
-    size: 13,
-    color: rgb(0, 0, 0),
-  });
+    page.drawText(name, {
+      x: 165,
+      y: pdfHeight - 173,
+      size: 13,
+      color: rgb(0, 0, 0),
+    });
 
-  page.drawText(father, {
-    x: 165,
-    y: pdfHeight - 190,
-    size: 13,
-    color: rgb(0, 0, 0),
-  });
+    page.drawText(father, {
+      x: 165,
+      y: pdfHeight - 190,
+      size: 13,
+      color: rgb(0, 0, 0),
+    });
 
-  page.drawText(CName, {
-    x: 165,
-    y: pdfHeight - 207,
-    size: 13,
-    color: rgb(0, 0, 0),
-  });
+    page.drawText(CName, {
+      x: 165,
+      y: pdfHeight - 207,
+      size: 13,
+      color: rgb(0, 0, 0),
+    });
 
-  page.drawText(ATI_CODE, {
-    x: 165,
-    y: pdfHeight - 224,
-    size: 13,
-    color: rgb(0, 0, 0),
-  });
+    page.drawText(ATI_CODE, {
+      x: 165,
+      y: pdfHeight - 224,
+      size: 13,
+      color: rgb(0, 0, 0),
+    });
 
-  page.drawText(ExamCenterCode, {
-    x: 165,
-    y: pdfHeight - 241,
-    size: 13,
-    color: rgb(0, 0, 0),
-  });
+    page.drawText(ExamCenterCode, {
+      x: 165,
+      y: pdfHeight - 241,
+      size: 13,
+      color: rgb(0, 0, 0),
+    });
 
-  page.drawText(theoryExamdate, {
-    x: 83,
-    y: pdfHeight - 272,
-    size: 8,
-    color: rgb(0, 0, 0),
-  });
+    page.drawText(theoryExamdate, {
+      x: 83,
+      y: pdfHeight - 272,
+      size: 8,
+      color: rgb(0, 0, 0),
+    });
 
-  page.drawText(theoryExmtime, {
-    x: 145,
-    y: pdfHeight - 272,
-    size: 8,
-    color: rgb(0, 0, 0),
-  });
+    page.drawText(theoryExmtime, {
+      x: 145,
+      y: pdfHeight - 272,
+      size: 8,
+      color: rgb(0, 0, 0),
+    });
 
-  page.drawText(sem, {
-    x: 208,
-    y: pdfHeight - 272,
-    size: 8,
-    color: rgb(0, 0, 0),
-  });
+    page.drawText(sem, {
+      x: 208,
+      y: pdfHeight - 272,
+      size: 8,
+      color: rgb(0, 0, 0),
+    });
 
-  page.drawText(practExmdate, {
-    x: 83,
-    y: pdfHeight - 289,
-    size: 8,
-    color: rgb(0, 0, 0),
-  });
+    page.drawText(practExmdate, {
+      x: 83,
+      y: pdfHeight - 289,
+      size: 8,
+      color: rgb(0, 0, 0),
+    });
 
-  page.drawText(practExmtime, {
-    x: 145,
-    y: pdfHeight - 289,
-    size: 8,
-    color: rgb(0, 0, 0),
-  });
+    page.drawText(practExmtime, {
+      x: 145,
+      y: pdfHeight - 289,
+      size: 8,
+      color: rgb(0, 0, 0),
+    });
 
-  page.drawText(sem, {
-    x: 208,
-    y: pdfHeight - 289,
-    size: 8,
-    color: rgb(0, 0, 0),
-  });
+    page.drawText(sem, {
+      x: 208,
+      y: pdfHeight - 289,
+      size: 8,
+      color: rgb(0, 0, 0),
+    });
 
-  page.drawImage(image, {
-    x: 390, // Adjust X position
-    y: pdfHeight - 220, // Adjust Y position (PDF coordinates start from bottom-left)
-    width: 90,
-    height: 100,
-  });
+    page.drawImage(image, {
+      x: 390, // Adjust X position
+      y: pdfHeight - 220, // Adjust Y position (PDF coordinates start from bottom-left)
+      width: 90,
+      height: 100,
+    });
 
-  page.drawImage(image2, {
-    x: 277, // Adjust X position
-    y: pdfHeight - 325, // Adjust Y position (PDF coordinates start from bottom-left)
-    width: 45,
-    height: 30,
-  });
-  const pdfBytes = await pdfDoc.save();
-  const n = name.split(" ")[0];
+    page.drawImage(image2, {
+      x: 277, // Adjust X position
+      y: pdfHeight - 325, // Adjust Y position (PDF coordinates start from bottom-left)
+      width: 45,
+      height: 30,
+    });
+    const pdfBytes = await pdfDoc.save();
+    const n = name.split(" ")[0];
 
-  const params = {
-    Bucket: process.env.AWS_BUCKET_NAME,
-    Key: `admit/${n}-${sem}.pdf`,
-    Body: pdfBytes,
-    ContentType: "application/pdf",
-  };
+    const params = {
+      Bucket: process.env.AWS_BUCKET_NAME,
+      Key: `admit/${n}-${sem}.pdf`,
+      Body: pdfBytes,
+      ContentType: "application/pdf",
+    };
 
-  const command = new PutObjectCommand(params);
-  await s3.send(command);
-  const pdfUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/admit/${n}-${sem}.pdf`;
-  return pdfUrl;
+    const command = new PutObjectCommand(params);
+    await s3.send(command);
+    const pdfUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/admit/${n}-${sem}.pdf`;
+    return pdfUrl;
 
-  // fs.writeFileSync("filled_admit.pdf", pdfBytes);
+    // fs.writeFileSync("filled_admit.pdf", pdfBytes);
+  } catch (error) {
+    logger.error(error);
+  }
 }
 
 export async function fillId({
@@ -509,437 +528,445 @@ export async function fillId({
   course: { CName },
   name,
 }: dtype) {
-  const existingPdfBytes = fs.readFileSync("files/id.pdf");
-  const pdfDoc = await PDFDocument.load(existingPdfBytes);
-  const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
-  const page = pdfDoc.getPages()[0];
-  if (typeof page == "undefined") return;
+  try {
+    const existingPdfBytes = fs.readFileSync("files/id.pdf");
+    const pdfDoc = await PDFDocument.load(existingPdfBytes);
+    const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+    const page = pdfDoc.getPages()[0];
+    if (typeof page == "undefined") return;
 
-  const pdfHeight = page.getHeight();
-  const pdfWidth = page.getWidth();
+    const pdfHeight = page.getHeight();
+    const pdfWidth = page.getWidth();
 
-  await makeCircularImage(imageLink);
-  const imageBytes = fs.readFileSync("circle.png");
+    await makeCircularImage(imageLink);
 
-  const sNamePosition = adjustCenteredTextPosition(
-    name,
-    pdfWidth,
-    pdfHeight,
-    940,
-    font,
-    80
-  );
-  const cNamePosition = adjustCenteredTextPosition(
-    CName,
-    pdfWidth,
-    pdfHeight,
-    1000,
-    font,
-    40
-  );
+    const imageBytes = fs.readFileSync("circle.png");
 
-  page.drawText(name, {
-    x: sNamePosition.x,
-    y: sNamePosition.y,
-    size: sNamePosition.size,
-    color: rgb(0, 0, 0),
-  });
+    const sNamePosition = adjustCenteredTextPosition(
+      name,
+      pdfWidth,
+      pdfHeight,
+      940,
+      font,
+      80
+    );
+    const cNamePosition = adjustCenteredTextPosition(
+      CName,
+      pdfWidth,
+      pdfHeight,
+      1000,
+      font,
+      40
+    );
 
-  page.drawText(CName, {
-    x: cNamePosition.x,
-    y: cNamePosition.y,
-    size: cNamePosition.size,
-    color: rgb(0, 1, 0),
-  });
-
-  page.drawText(`ID NO: ${IdCardNo}`, {
-    x: 70,
-    y: pdfHeight - 1100,
-    size: 50,
-    color: rgb(0, 0, 0),
-  });
-
-  page.drawText(`ENROLLMENT: ${Enrollmentno}`, {
-    x: 70,
-    y: pdfHeight - 1180,
-    size: 50,
-    color: rgb(0, 0, 0),
-  });
-
-  page.drawText(`ADDRESS: ${address}`, {
-    x: 70,
-    y: pdfHeight - 1260,
-    size: 50,
-    color: rgb(0, 0, 0),
-  });
-
-  interface WrapTextParams {
-    text: string;
-    maxWidth: number;
-    font: PDFDocument["fonts"][0];
-    fontSize: number;
-  }
-
-  const wrapText = ({
-    text,
-    maxWidth,
-    font,
-    fontSize,
-  }: WrapTextParams): string[] => {
-    if (!text.trim()) return []; // Handle empty or whitespace-only text
-
-    const words = text.split(/\s+/); // Split on multiple spaces to avoid empty entries
-    let lines: string[] = [];
-    let currentLine = words[0] || ""; // Ensure it's a string
-
-    for (let i = 1; i < words.length; i++) {
-      const word = words[i] ?? "";
-
-      const width = font.widthOfTextAtSize(`${currentLine} ${word}`, fontSize);
-
-      if (width < maxWidth) {
-        currentLine += ` ${word}`;
-      } else {
-        lines.push(currentLine);
-        currentLine = word;
-      }
-    }
-
-    if (currentLine) lines.push(currentLine); // Push last line if not empty
-    return lines;
-  };
-
-  // Define text wrapping parameters
-  const maxWidth = pdfWidth - 60; // Adjust as needed
-  const fontSize = 50;
-  const wrappedLines = wrapText({
-    text: `CENTER: ${Centername}`,
-    maxWidth,
-    font,
-    fontSize,
-  });
-
-  // Draw wrapped text
-  let yPosition = pdfHeight - 1340;
-
-  wrappedLines.forEach((line) => {
-    page.drawText(line, {
-      x: 70,
-      y: yPosition,
-      size: fontSize,
+    page.drawText(name, {
+      x: sNamePosition.x,
+      y: sNamePosition.y,
+      size: sNamePosition.size,
       color: rgb(0, 0, 0),
     });
-    yPosition -= fontSize + 5; // Adjust line spacing
-  });
 
-  const Image = await pdfDoc.embedPng(imageBytes);
-  const { width, height } = Image.scale(0.47); // Scale image
+    page.drawText(CName, {
+      x: cNamePosition.x,
+      y: cNamePosition.y,
+      size: cNamePosition.size,
+      color: rgb(0, 1, 0),
+    });
 
-  page.drawImage(Image, {
-    x: 340, // Adjust X position
-    y: pdfHeight - 830, // Adjust Y position (PDF coordinates start from bottom-left)
-    width,
-    height,
-  });
+    page.drawText(`ID NO: ${IdCardNo}`, {
+      x: 70,
+      y: pdfHeight - 1100,
+      size: 50,
+      color: rgb(0, 0, 0),
+    });
 
-  page.drawText(address, {
-    x: 23,
-    y: pdfHeight - 1540,
-    size: 45,
-    color: rgb(1, 1, 1),
-  });
+    page.drawText(`ENROLLMENT: ${Enrollmentno.toString()}`, {
+      x: 70,
+      y: pdfHeight - 1180,
+      size: 50,
+      color: rgb(0, 0, 0),
+    });
 
-  page.drawText(`ph: ${mobileNo}`, {
-    x: 690,
-    y: pdfHeight - 1656,
-    size: 45,
-    color: rgb(1, 1, 1),
-  });
+    page.drawText(`ADDRESS: ${address}`, {
+      x: 70,
+      y: pdfHeight - 1260,
+      size: 50,
+      color: rgb(0, 0, 0),
+    });
 
-  const pdfBytes = await pdfDoc.save();
-  const n = name.split(" ")[0];
+    interface WrapTextParams {
+      text: string;
+      maxWidth: number;
+      font: PDFDocument["fonts"][0];
+      fontSize: number;
+    }
 
-  const params = {
-    Bucket: process.env.AWS_BUCKET_NAME,
-    Key: `idcard/${n}-${IdCardNo}.pdf`,
-    Body: pdfBytes,
-    ContentType: "application/pdf",
-  };
-  const command = new PutObjectCommand(params);
-  await s3.send(command);
-  const pdfUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/idcard/${n}-${IdCardNo}.pdf`;
-  return pdfUrl;
-  // fs.writeFileSync("filled_id.pdf", pdfBytes);
+    const wrapText = ({
+      text,
+      maxWidth,
+      font,
+      fontSize,
+    }: WrapTextParams): string[] => {
+      if (!text.trim()) return []; // Handle empty or whitespace-only text
+
+      const words = text.split(/\s+/); // Split on multiple spaces to avoid empty entries
+      let lines: string[] = [];
+      let currentLine = words[0] || ""; // Ensure it's a string
+
+      for (let i = 1; i < words.length; i++) {
+        const word = words[i] ?? "";
+
+        const width = font.widthOfTextAtSize(
+          `${currentLine} ${word}`,
+          fontSize
+        );
+
+        if (width < maxWidth) {
+          currentLine += ` ${word}`;
+        } else {
+          lines.push(currentLine);
+          currentLine = word;
+        }
+      }
+
+      if (currentLine) lines.push(currentLine); // Push last line if not empty
+      return lines;
+    };
+
+    // Define text wrapping parameters
+    const maxWidth = pdfWidth - 60; // Adjust as needed
+    const fontSize = 50;
+    const wrappedLines = wrapText({
+      text: `CENTER: ${Centername}`,
+      maxWidth,
+      font,
+      fontSize,
+    });
+
+    // Draw wrapped text
+    let yPosition = pdfHeight - 1340;
+
+    wrappedLines.forEach((line) => {
+      page.drawText(line, {
+        x: 70,
+        y: yPosition,
+        size: fontSize,
+        color: rgb(0, 0, 0),
+      });
+      yPosition -= fontSize + 5; // Adjust line spacing
+    });
+
+    const Image = await pdfDoc.embedPng(imageBytes);
+    const { width, height } = Image.scale(0.47); // Scale image
+
+    page.drawImage(Image, {
+      x: 340, // Adjust X position
+      y: pdfHeight - 830, // Adjust Y position (PDF coordinates start from bottom-left)
+      width,
+      height,
+    });
+
+    page.drawText(address, {
+      x: 23,
+      y: pdfHeight - 1540,
+      size: 45,
+      color: rgb(1, 1, 1),
+    });
+
+    page.drawText(`ph: ${mobileNo}`, {
+      x: 690,
+      y: pdfHeight - 1656,
+      size: 45,
+      color: rgb(1, 1, 1),
+    });
+
+    const pdfBytes = await pdfDoc.save();
+    const n = name.split(" ")[0];
+    const params = {
+      Bucket: process.env.AWS_BUCKET_NAME,
+      Key: `idcard/${n}-${IdCardNo}.pdf`,
+      Body: pdfBytes,
+      ContentType: "application/pdf",
+    };
+    const command = new PutObjectCommand(params);
+    await s3.send(command);
+    const pdfUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/idcard/${n}-${IdCardNo}.pdf`;
+    return pdfUrl;
+    // fs.writeFileSync("filled_id.pdf", pdfBytes);
+  } catch (error) {
+    logger.error(error);
+  }
 }
 
 export async function fillMarksheet(data: MarksheetData) {
-  const existingPdfBytes = fs.readFileSync("files/marksheet.pdf");
-  const pdfDoc = await PDFDocument.load(existingPdfBytes);
-  const page = pdfDoc.getPages()[0];
-  if (typeof page == "undefined") return;
+  try {
+    const existingPdfBytes = fs.readFileSync("files/marksheet.pdf");
+    const pdfDoc = await PDFDocument.load(existingPdfBytes);
+    const page = pdfDoc.getPages()[0];
+    if (typeof page == "undefined") return;
 
-  const pdfHeight = page.getHeight();
-  const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold); // Embed bold font
+    const pdfHeight = page.getHeight();
+    const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold); // Embed bold font
 
-  const response = await axios({
-    url: data.enrollment.imageLink,
-    responseType: "arraybuffer", // Download as buffer
-  });
+    const response = await axios({
+      url: data.enrollment.imageLink,
+      responseType: "arraybuffer", // Download as buffer
+    });
 
-  const Image = await pdfDoc.embedJpg(Buffer.from(response.data));
+    const Image = await pdfDoc.embedJpg(Buffer.from(response.data));
 
-  const studentData = {
-    Name: data.enrollment.name,
-    EnrollmentNo: data.EnrollmentNo,
-    CourseName: data.enrollment.course.CName,
-    Centername: data.enrollment.center.Centername,
-    totalMarks: data.totalMarks,
-  };
+    const studentData = {
+      Name: data.enrollment.name,
+      EnrollmentNo: data.EnrollmentNo,
+      CourseName: data.enrollment.course.CName,
+      Centername: data.enrollment.center.Centername,
+      totalMarks: data.totalMarks,
+    };
 
-  const qrText = JSON.stringify(studentData);
+    const qrText = JSON.stringify(studentData);
 
-  const qrCodeBuffer = await QRCode.toBuffer(qrText);
+    const qrCodeBuffer = await QRCode.toBuffer(qrText);
 
-  const qrImage = await pdfDoc.embedPng(qrCodeBuffer);
-  const { width, height } = qrImage.scale(0.27);
+    const qrImage = await pdfDoc.embedPng(qrCodeBuffer);
+    const { width, height } = qrImage.scale(0.27);
 
-  page.drawImage(qrImage, {
-    x: 35, // Adjust X position
-    y: pdfHeight - 180, // Adjust Y position (PDF starts from bottom-left)
-    width,
-    height,
-  });
-  page.drawImage(Image, {
-    x: 525, // Adjust X position
-    y: pdfHeight - 180, // Adjust Y position (PDF coordinates start from bottom-left)
-    width,
-    height,
-  });
+    page.drawImage(qrImage, {
+      x: 35, // Adjust X position
+      y: pdfHeight - 180, // Adjust Y position (PDF starts from bottom-left)
+      width,
+      height,
+    });
+    page.drawImage(Image, {
+      x: 525, // Adjust X position
+      y: pdfHeight - 180, // Adjust Y position (PDF coordinates start from bottom-left)
+      width,
+      height,
+    });
 
-  // Student Information
-  page.drawText(data.enrollment.name.toUpperCase(), {
-    x: 158,
-    y: pdfHeight - 218,
-    size: 12,
-    color: rgb(0, 0, 0),
-  });
-  page.drawText(data.EnrollmentNo.toUpperCase(), {
-    x: 487,
-    y: pdfHeight - 218,
-    size: 12,
-    color: rgb(0, 0, 0),
-  });
-  page.drawText(data.enrollment.father.toUpperCase(), {
-    x: 102,
-    y: pdfHeight - 243,
-    size: 12,
-    color: rgb(0, 0, 0),
-  });
-  page.drawText(data.year, {
-    x: 415,
-    y: pdfHeight - 243,
-    size: 12,
-    color: rgb(0, 0, 0),
-  });
-  page.drawText(data.enrollment.course.CName.toUpperCase(), {
-    x: 136,
-    y: pdfHeight - 269,
-    size: 12,
-    color: rgb(0, 0, 0),
-  });
-  page.drawText(
-    `${data.enrollment.course.Duration.toString().toUpperCase()} months`,
-    {
-      x: 500,
+    // Student Information
+    page.drawText(data.enrollment.name.toUpperCase(), {
+      x: 158,
+      y: pdfHeight - 218,
+      size: 12,
+      color: rgb(0, 0, 0),
+    });
+    page.drawText(`${data.EnrollmentNo}`, {
+      x: 487,
+      y: pdfHeight - 218,
+      size: 12,
+      color: rgb(0, 0, 0),
+    });
+    page.drawText(data.enrollment.father.toUpperCase(), {
+      x: 102,
+      y: pdfHeight - 243,
+      size: 12,
+      color: rgb(0, 0, 0),
+    });
+    page.drawText(data.year, {
+      x: 415,
+      y: pdfHeight - 243,
+      size: 12,
+      color: rgb(0, 0, 0),
+    });
+    page.drawText(data.enrollment.course.CName.toUpperCase(), {
+      x: 136,
       y: pdfHeight - 269,
       size: 12,
       color: rgb(0, 0, 0),
-    }
-  );
-  page.drawText(data.enrollment.center.Centername.toUpperCase(), {
-    x: 130,
-    y: pdfHeight - 294,
-    size: 10,
-    color: rgb(0, 0, 0),
-  });
-
-  page.drawText(data.enrollment.center.code.toUpperCase(), {
-    x: 480,
-    y: pdfHeight - 295,
-    size: 12,
-    color: rgb(0, 0, 0),
-  });
-  page.drawText(data.enrollment.center.address.toUpperCase(), {
-    x: 146,
-    y: pdfHeight - 320,
-    size: 12,
-    color: rgb(0, 0, 0),
-  });
-
-  page.drawText(new Date(data.enrollment.dob).toLocaleDateString(), {
-    x: 470,
-    y: pdfHeight - 320,
-    size: 12,
-    color: rgb(0, 0, 0),
-  });
-
-  // Initialize total marks
-  let totalTheoryMarks = 0;
-  let totalPracticalMarks = 0;
-  let totalTheoryFullMarks = 0;
-  let totalPracticalFullMarks = 0;
-
-  let sl = 1;
-
-  // Subjects and Marks
-  let yPosition = pdfHeight - 410;
-  data.marks.forEach((subject) => {
-    const tm = parseInt(subject.theoryMarks);
-    const pm = parseInt(subject.practicalMarks);
-    const tfm = parseInt(subject.theoryFullMarks);
-    const pfm = parseInt(subject.practicalFullMarks);
-    const total = tm + pm;
-
-    totalTheoryMarks += tm;
-    totalPracticalMarks += pm;
-    totalTheoryFullMarks += tfm;
-    totalPracticalFullMarks += pfm;
-
-    page.drawText(sl.toString(), {
-      x: 28,
-      y: yPosition,
-      size: 13,
-      font: boldFont,
+    });
+    page.drawText(
+      `${data.enrollment.course.Duration.toString().toUpperCase()} months`,
+      {
+        x: 500,
+        y: pdfHeight - 269,
+        size: 12,
+        color: rgb(0, 0, 0),
+      }
+    );
+    page.drawText(data.enrollment.center.Centername.toUpperCase(), {
+      x: 130,
+      y: pdfHeight - 294,
+      size: 10,
       color: rgb(0, 0, 0),
     });
 
-    sl++;
-
-    page.drawText(subject.subject, {
-      x: 60,
-      y: yPosition,
-      size: 13,
-      font: boldFont,
+    page.drawText(data.enrollment.center.code.toString(), {
+      x: 480,
+      y: pdfHeight - 295,
+      size: 12,
       color: rgb(0, 0, 0),
     });
-    page.drawText(subject.theoryFullMarks.toString(), {
+    page.drawText(data.enrollment.center.address.toUpperCase(), {
+      x: 146,
+      y: pdfHeight - 320,
+      size: 12,
+      color: rgb(0, 0, 0),
+    });
+
+    page.drawText(new Date(data.enrollment.dob).toLocaleDateString(), {
+      x: 470,
+      y: pdfHeight - 320,
+      size: 12,
+      color: rgb(0, 0, 0),
+    });
+
+    // Initialize total marks
+    let totalTheoryMarks = 0;
+    let totalPracticalMarks = 0;
+    let totalTheoryFullMarks = 0;
+    let totalPracticalFullMarks = 0;
+
+    let sl = 1;
+
+    // Subjects and Marks
+    let yPosition = pdfHeight - 410;
+    data.marks.forEach((subject) => {
+      const tm = parseInt(subject.theoryMarks);
+      const pm = parseInt(subject.practicalMarks);
+      const tfm = parseInt(subject.theoryFullMarks);
+      const pfm = parseInt(subject.practicalFullMarks);
+      const total = tm + pm;
+
+      totalTheoryMarks += tm;
+      totalPracticalMarks += pm;
+      totalTheoryFullMarks += tfm;
+      totalPracticalFullMarks += pfm;
+
+      page.drawText(sl.toString(), {
+        x: 28,
+        y: yPosition,
+        size: 13,
+        font: boldFont,
+        color: rgb(0, 0, 0),
+      });
+
+      sl++;
+
+      page.drawText(subject.subject, {
+        x: 60,
+        y: yPosition,
+        size: 13,
+        font: boldFont,
+        color: rgb(0, 0, 0),
+      });
+      page.drawText(subject.theoryFullMarks.toString(), {
+        x: 290,
+        y: yPosition,
+        size: 13,
+        font: boldFont,
+        color: rgb(0, 0, 0),
+      });
+      page.drawText(subject.practicalFullMarks.toString(), {
+        x: 355,
+        y: yPosition,
+        size: 13,
+        font: boldFont,
+        color: rgb(0, 0, 0),
+      });
+      page.drawText(subject.theoryMarks.toString(), {
+        x: 430,
+        y: yPosition,
+        size: 13,
+        font: boldFont,
+        color: rgb(0, 0, 0),
+      });
+      page.drawText(subject.practicalMarks.toString(), {
+        x: 495,
+        y: yPosition,
+        size: 13,
+        font: boldFont,
+        color: rgb(0, 0, 0),
+      });
+      page.drawText(total.toString(), {
+        x: 555,
+        y: yPosition,
+        size: 13,
+        font: boldFont,
+        color: rgb(0, 0, 0),
+      });
+
+      yPosition -= 25; // Move to the next row
+    });
+
+    page.drawText(totalTheoryFullMarks.toString(), {
       x: 290,
-      y: yPosition,
+      y: pdfHeight - 645,
       size: 13,
       font: boldFont,
       color: rgb(0, 0, 0),
     });
-    page.drawText(subject.practicalFullMarks.toString(), {
+
+    page.drawText(totalPracticalFullMarks.toString(), {
       x: 355,
-      y: yPosition,
+      y: pdfHeight - 645,
       size: 13,
       font: boldFont,
       color: rgb(0, 0, 0),
     });
-    page.drawText(subject.theoryMarks.toString(), {
-      x: 430,
-      y: yPosition,
+
+    page.drawText(totalTheoryMarks.toString(), {
+      x: 426,
+      y: pdfHeight - 645,
       size: 13,
       font: boldFont,
       color: rgb(0, 0, 0),
     });
-    page.drawText(subject.practicalMarks.toString(), {
-      x: 495,
-      y: yPosition,
+
+    page.drawText(totalPracticalMarks.toString(), {
+      x: 490,
+      y: pdfHeight - 645,
       size: 13,
       font: boldFont,
       color: rgb(0, 0, 0),
     });
-    page.drawText(total.toString(), {
+
+    // Grand Total, Percentage, Grade, and Result
+    page.drawText(data.totalMarks.toString(), {
       x: 555,
-      y: yPosition,
+      y: pdfHeight - 645,
+      size: 13,
+      font: boldFont,
+      color: rgb(0, 0, 0),
+    });
+    page.drawText(data.percentage.toFixed(2) + "%", {
+      x: 285,
+      y: pdfHeight - 672,
+      size: 13,
+      font: boldFont,
+      color: rgb(0, 0, 0),
+    });
+    page.drawText(data.grade, {
+      x: 560,
+      y: pdfHeight - 672,
+      size: 13,
+      font: boldFont,
+      color: rgb(0, 0, 0),
+    });
+    page.drawText(data.remarks, {
+      x: 50,
+      y: pdfHeight - 672,
       size: 13,
       font: boldFont,
       color: rgb(0, 0, 0),
     });
 
-    yPosition -= 25; // Move to the next row
-  });
+    // Save the PDF
+    const pdfBytes = await pdfDoc.save();
+    const n = data.enrollment.name.split(" ")[0];
 
-  page.drawText(totalTheoryFullMarks.toString(), {
-    x: 290,
-    y: pdfHeight - 645,
-    size: 13,
-    font: boldFont,
-    color: rgb(0, 0, 0),
-  });
+    const params = {
+      Bucket: process.env.AWS_BUCKET_NAME,
+      Key: `marksheet/${n}-${data.totalMarks}.pdf`,
+      Body: pdfBytes,
+      ContentType: "application/pdf",
+    };
 
-  page.drawText(totalPracticalFullMarks.toString(), {
-    x: 355,
-    y: pdfHeight - 645,
-    size: 13,
-    font: boldFont,
-    color: rgb(0, 0, 0),
-  });
-
-  page.drawText(totalTheoryMarks.toString(), {
-    x: 426,
-    y: pdfHeight - 645,
-    size: 13,
-    font: boldFont,
-    color: rgb(0, 0, 0),
-  });
-
-  page.drawText(totalPracticalMarks.toString(), {
-    x: 490,
-    y: pdfHeight - 645,
-    size: 13,
-    font: boldFont,
-    color: rgb(0, 0, 0),
-  });
-
-  // Grand Total, Percentage, Grade, and Result
-  page.drawText(data.totalMarks.toString(), {
-    x: 555,
-    y: pdfHeight - 645,
-    size: 13,
-    font: boldFont,
-    color: rgb(0, 0, 0),
-  });
-  page.drawText(data.percentage.toFixed(2) + "%", {
-    x: 285,
-    y: pdfHeight - 672,
-    size: 13,
-    font: boldFont,
-    color: rgb(0, 0, 0),
-  });
-  page.drawText(data.grade, {
-    x: 560,
-    y: pdfHeight - 672,
-    size: 13,
-    font: boldFont,
-    color: rgb(0, 0, 0),
-  });
-  page.drawText(data.remarks, {
-    x: 50,
-    y: pdfHeight - 672,
-    size: 13,
-    font: boldFont,
-    color: rgb(0, 0, 0),
-  });
-
-  // Save the PDF
-  const pdfBytes = await pdfDoc.save();
-  const n = data.enrollment.name.split(" ")[0];
-
-  const params = {
-    Bucket: process.env.AWS_BUCKET_NAME,
-    Key: `marksheet/${n}-${data.totalMarks}.pdf`,
-    Body: pdfBytes,
-    ContentType: "application/pdf",
-  };
-
-  const command = new PutObjectCommand(params);
-  await s3.send(command);
-  const pdfUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/marksheet/${n}-${data.totalMarks}.pdf`;
-  return pdfUrl;
-  // fs.writeFileSync("filled_Marksheet.pdf", pdfBytes);
+    const command = new PutObjectCommand(params);
+    await s3.send(command);
+    const pdfUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/marksheet/${n}-${data.totalMarks}.pdf`;
+    return pdfUrl;
+    // fs.writeFileSync("filled_Marksheet.pdf", pdfBytes);
+  } catch (error) {
+    logger.error(error);
+  }
 }
-
-// uthate gele komabo
-//idcard no e / thakbe na

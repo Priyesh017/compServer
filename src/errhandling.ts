@@ -8,6 +8,8 @@ export const ErrorHandler =
     try {
       await handler(req, res, next);
     } catch (error) {
-      res.status(500).json({ message: "Some error happened", error });
+      res
+        .status(500)
+        .json({ success: false, message: "Some error happened", error });
     }
   };
