@@ -12,7 +12,6 @@ import { prisma } from "./client.js";
 import helmet from "helmet";
 import logger from "./logger.js";
 import { Resend } from "resend";
-import { sendTemporaryPasswordEmail } from "./emailHelper.js";
 
 export const resend = new Resend(process.env.RESEND_KEY);
 
@@ -39,6 +38,7 @@ export const s3 = new S3Client({
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
   },
 });
+const allowedOrigins = [process.env.CORSORIGIN, process.env.CORSORIGIN2];
 
 app.use(helmet());
 app.use(generalLimiter);
@@ -46,7 +46,13 @@ app.use(BodyParser.json());
 app.use(cookieParser(process.env.COOKIEP));
 app.use(
   cors({
-    origin: process.env.CORSORIGIN,
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
   })
 );
@@ -89,17 +95,9 @@ app.post("/log", (req, res) => {
   res.sendStatus(200);
 });
 
-app.get("/mailsend", async (req, res) => {
-  const data = await sendTemporaryPasswordEmail(
-    "khandanimai4@gmail.com",
-    "mainak3"
-  );
-  res.json({ data });
-});
-
 app.use(router);
 
-app.use((_, res, next) => {
+app.use((_, res) => {
   res.status(404).json({ error: "Route not found" });
 });
 

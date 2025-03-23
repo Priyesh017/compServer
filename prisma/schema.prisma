@@ -71,27 +71,27 @@ model Center {
 }
 
 model Enrollment {
-  id              Int    @id @default(autoincrement())
-  Enrollmentno    Int    @unique @default(autoincrement())
-  IdCardNo        Int    @unique @default(autoincrement())
-  idCardLink      String @default("")
-  admitLink       String @default("")
-  certificateLink String @default("")
-  marksheetLink   String @default("")
-  imageLink       String @default("")
-
-  name        String
-  dob         DateTime
-  father      String
-  mother      String
-  address     String
-  mobileNo    String
-  wpNo        String
-  sex         Sex
-  category    Category
-  nationality Nationality
-  idProof     IdType
-  idProofNo   String
+  id              Int         @id @default(autoincrement())
+  Enrollmentno    Int         @unique @default(autoincrement())
+  IdCardNo        Int         @unique @default(autoincrement())
+  idCardLink      String      @default("")
+  admitLink       String      @default("")
+  certificateLink String      @default("")
+  marksheetLink   String      @default("")
+  imageLink       String      @default("")
+  CertificateNo   Int?        @unique @default(autoincrement())
+  name            String
+  dob             DateTime
+  father          String
+  mother          String
+  address         String
+  mobileNo        String
+  wpNo            String
+  sex             Sex
+  category        Category
+  nationality     Nationality
+  idProof         IdType
+  idProofNo       String
 
   eduqualification String
   activated        Boolean @default(false)

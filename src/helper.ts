@@ -21,6 +21,7 @@ interface dtype {
   name: string;
   center: {
     Centername: string;
+    code: number;
   };
   address: string;
   course: {
@@ -54,6 +55,7 @@ interface iData {
     father: string;
     dob: string;
     imageLink: string;
+    CertificateNo: number;
     course: {
       CName: string;
       Duration: number;
@@ -61,6 +63,7 @@ interface iData {
     center: {
       Centername: string;
       address: string;
+      code: number;
     };
   };
 }
@@ -85,6 +88,7 @@ type DataItem = {
     address: string;
     center: {
       Centername: string;
+      code: number;
     };
     father: string;
     IdCardNo: string;
@@ -215,16 +219,26 @@ const adjustCenteredTextPosition = (
 
   return { x, y, size: fontSize };
 };
+
+function getRandomDate(year: number) {
+  const start = new Date(year, 0, 1); // January 1st of the given year
+  const end = new Date(year, 11, 31); // December 31st of the given year
+  const randomTime =
+    start.getTime() + Math.random() * (end.getTime() - start.getTime());
+  return new Date(randomTime).toLocaleDateString();
+}
+
 export async function fillCertificate({
   grade,
   totalMarks,
   year,
   enrollment: {
     name,
+    CertificateNo,
     imageLink,
     father,
     course: { CName, Duration },
-    center: { Centername },
+    center: { Centername, code },
   },
   EnrollmentNo,
 }: iData) {
@@ -276,8 +290,13 @@ export async function fillCertificate({
       height,
     });
     // Set font size and position
+
     const fontSize = 18;
-    page.drawText("123456", {
+
+    const remc = 4 - countDigits(EnrollmentNo);
+    const paddedNumberc = EnrollmentNo.toString().padStart(remc, "0");
+
+    page.drawText(`${year}${paddedNumberc}`, {
       x: 371,
       y: pdfHeight - 32,
       size: 12,
@@ -303,7 +322,7 @@ export async function fillCertificate({
       color: rgb(0, 0, 0),
     });
 
-    page.drawText(`${Duration.toString()} months`, {
+    page.drawText(`${Duration.toString()} MONTH`, {
       x: 145,
       y: pdfHeight - 367,
       size: fontSize,
@@ -322,7 +341,14 @@ export async function fillCertificate({
       size: fontSize,
       color: rgb(0, 0, 0),
     });
-    page.drawText(EnrollmentNo.toString(), {
+
+    const rem = 6 - countDigits(EnrollmentNo);
+    const remcode = 6 - countDigits(code);
+
+    const paddedNumber = EnrollmentNo.toString().padStart(rem, "0");
+    const paddedCode = code.toString().padStart(remcode, "0");
+
+    page.drawText(`YCTC${paddedCode}/${paddedNumber}`, {
       x: 483,
       y: pdfHeight - 392,
       size: 15,
@@ -335,7 +361,12 @@ export async function fillCertificate({
       color: rgb(0, 0, 0),
     });
 
-    page.drawText(new Date(Date.now()).toLocaleDateString(), {
+    const issueDate =
+      year == new Date(Date.now()).getFullYear().toString()
+        ? new Date(Date.now()).toLocaleDateString()
+        : getRandomDate(parseInt(year));
+
+    page.drawText(issueDate, {
       x: 249,
       y: pdfHeight - 445,
       size: fontSize,
@@ -372,6 +403,7 @@ export async function filladmit({
     father,
     course: { CName },
     imageLink,
+    center: { code },
   },
   ATI_CODE,
   ExamCenterCode,
@@ -400,7 +432,13 @@ export async function filladmit({
     const image = await pdfDoc.embedJpg(Buffer.from(response.data));
     const image2 = await pdfDoc.embedPng(imageBytes2);
 
-    page.drawText(EnrollmentNo.toString(), {
+    const rem = 6 - countDigits(EnrollmentNo);
+    const remcode = 6 - countDigits(code);
+
+    const paddedNumber = EnrollmentNo.toString().padStart(rem, "0");
+    const paddedCode = code.toString().padStart(remcode, "0");
+
+    page.drawText(`YCTC${paddedCode}/${paddedNumber}`, {
       x: 165,
       y: pdfHeight - 156,
       size: 13,
@@ -524,7 +562,7 @@ export async function fillId({
   address,
   imageLink,
   mobileNo,
-  center: { Centername },
+  center: { Centername, code },
   course: { CName },
   name,
 }: dtype) {
@@ -579,8 +617,13 @@ export async function fillId({
       size: 50,
       color: rgb(0, 0, 0),
     });
+    const rem = 6 - countDigits(Enrollmentno);
+    const remcode = 6 - countDigits(code);
 
-    page.drawText(`ENROLLMENT: ${Enrollmentno.toString()}`, {
+    const paddedNumber = Enrollmentno.toString().padStart(rem, "0");
+    const paddedCode = code.toString().padStart(remcode, "0");
+
+    page.drawText(`ENROLLMENT: YCTC${paddedCode}/${paddedNumber}`, {
       x: 70,
       y: pdfHeight - 1180,
       size: 50,
@@ -743,6 +786,14 @@ export async function fillMarksheet(data: MarksheetData) {
       height,
     });
 
+    const rem = 6 - countDigits(data.EnrollmentNo);
+    const remcode = 6 - countDigits(data.enrollment.center.code);
+
+    const paddedNumber = data.EnrollmentNo.toString().padStart(rem, "0");
+    const paddedCode = data.enrollment.center.code
+      .toString()
+      .padStart(remcode, "0");
+
     // Student Information
     page.drawText(data.enrollment.name.toUpperCase(), {
       x: 158,
@@ -750,7 +801,7 @@ export async function fillMarksheet(data: MarksheetData) {
       size: 12,
       color: rgb(0, 0, 0),
     });
-    page.drawText(`${data.EnrollmentNo}`, {
+    page.drawText(`YCTC${paddedCode}/${paddedNumber}`, {
       x: 487,
       y: pdfHeight - 218,
       size: 12,
@@ -775,7 +826,7 @@ export async function fillMarksheet(data: MarksheetData) {
       color: rgb(0, 0, 0),
     });
     page.drawText(
-      `${data.enrollment.course.Duration.toString().toUpperCase()} months`,
+      `${data.enrollment.course.Duration.toString().toUpperCase()} MONTH`,
       {
         x: 500,
         y: pdfHeight - 269,

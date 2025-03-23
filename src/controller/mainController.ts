@@ -196,6 +196,7 @@ export async function generateId(req: Request, res: Response) {
       center: {
         select: {
           Centername: true,
+          code: true,
         },
       },
       IdCardNo: true,
@@ -386,6 +387,7 @@ export async function exmformsfetch(req: Request, res: Response) {
           center: {
             select: {
               Centername: true,
+              code: true,
             },
           },
           IdCardNo: true,
@@ -425,6 +427,7 @@ export async function marksheetfetch(req: Request, res: Response) {
           father: true,
           dob: true,
           imageLink: true,
+          CertificateNo: true,
           course: {
             select: {
               CName: true,
@@ -645,9 +648,19 @@ export async function VerifyEnquiry(req: Request, res: Response) {
     const hashedPassword = await Bcrypt.hash(Random_Password, 10);
 
     //send password to mail
-    sendUpdate(1, "sending mail");
+    sendUpdate(1, "sending temporary password to mail");
 
     await sendTemporaryPasswordEmail(email, Random_Password);
+
+    const tempdata = await prisma.enquiry.findFirst({
+      where: {
+        email,
+      },
+      select: {
+        AddressLine: true,
+        vill: true,
+      },
+    });
 
     const newUser = await prisma.user.create({
       data: {
@@ -660,8 +673,8 @@ export async function VerifyEnquiry(req: Request, res: Response) {
     const data = await prisma.center.create({
       data: {
         adminid: newUser.id,
-        address: "",
-        Centername: "",
+        address: tempdata!.AddressLine,
+        Centername: `${tempdata?.vill} MISSION NATIONAL YOUTH COMPUTER CENTER`,
       },
     });
     sendUpdate(2, "center created");
