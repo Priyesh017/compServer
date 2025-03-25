@@ -351,7 +351,7 @@ export async function fillCertificate({
     page.drawText(`YCTC${paddedCode}/${paddedNumber}`, {
       x: 483,
       y: pdfHeight - 392,
-      size: 15,
+      size: 12,
       color: rgb(0, 0, 0),
     });
     page.drawText(Centername, {

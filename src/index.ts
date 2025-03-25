@@ -24,6 +24,7 @@ redisClient.on("error", (err) => logger.error("Redis Error:", err));
 
 const app = express();
 const PORT = 3001;
+app.set("trust proxy", 1);
 
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -38,7 +39,11 @@ export const s3 = new S3Client({
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
   },
 });
-const allowedOrigins = [process.env.CORSORIGIN, process.env.CORSORIGIN2];
+const allowedOrigins = [
+  process.env.CORSORIGIN,
+  process.env.CORSORIGIN2,
+  process.env.CORSORIGIN3,
+];
 
 app.use(helmet());
 app.use(generalLimiter);
