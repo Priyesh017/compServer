@@ -293,8 +293,8 @@ export async function fillCertificate({
 
     const fontSize = 18;
 
-    const remc = 4 - countDigits(EnrollmentNo);
-    const paddedNumberc = EnrollmentNo.toString().padStart(remc, "0");
+    const remc = 4 - countDigits(CertificateNo);
+    const paddedNumberc = CertificateNo.toString().padStart(remc, "0");
 
     page.drawText(`${year}${paddedNumberc}`, {
       x: 371,
@@ -330,13 +330,13 @@ export async function fillCertificate({
     });
 
     page.drawText(year, {
-      x: 472,
+      x: 486,
       y: pdfHeight - 367,
       size: 15,
       color: rgb(0, 0, 0),
     });
     page.drawText(grade, {
-      x: 261,
+      x: 270,
       y: pdfHeight - 392,
       size: fontSize,
       color: rgb(0, 0, 0),
@@ -349,13 +349,13 @@ export async function fillCertificate({
     const paddedCode = code.toString().padStart(remcode, "0");
 
     page.drawText(`YCTC${paddedCode}/${paddedNumber}`, {
-      x: 483,
+      x: 479,
       y: pdfHeight - 392,
-      size: 12,
+      size: 13,
       color: rgb(0, 0, 0),
     });
     page.drawText(Centername, {
-      x: 218,
+      x: 200,
       y: pdfHeight - 417,
       size: 16,
       color: rgb(0, 0, 0),
