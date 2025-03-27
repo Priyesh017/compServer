@@ -260,10 +260,18 @@ export async function exmformfillupDatafetch(req: Request, res: Response) {
       Enrollmentno: parseInt(enrollmentNo),
       centerid,
     },
-    include: {
+    select: {
+      name: true,
+      father: true,
+      dob: true,
+      IdCardNo: true,
+      wpNo: true,
+      mobileNo: true,
+      address: true,
       center: {
         select: {
           Centername: true,
+          address: true,
         },
       },
       course: {
@@ -372,6 +380,7 @@ export async function exmmarksentry(req: Request, res: Response) {
 }
 
 export async function exmformsfetch(req: Request, res: Response) {
+  //FIXME
   const data = await prisma.examForm.findMany({
     where: {},
     include: {
@@ -569,7 +578,10 @@ export async function amountFetch(req: Request, res: Response) {
     where: {
       centerid: id,
     },
-    include: {
+    select: {
+      name: true,
+      Enrollmentno: true,
+      id: true,
       amount: {
         select: {
           amountRemain: true,
@@ -781,15 +793,12 @@ export async function ResetPassword(req: Request, res: Response) {
 }
 
 export async function subjectAdd(req: Request, res: Response) {
-  const { c } = req.body;
-  const data = JSON.parse(c);
-
-  const key = Object.keys(data)[0] as string;
-  const subjects = data[key];
+  const { c, cid } = req.body;
+  const subjects = JSON.parse(c);
 
   await prisma.course.update({
     where: {
-      id: parseInt(key),
+      id: parseInt(cid),
     },
     data: {
       subjects,

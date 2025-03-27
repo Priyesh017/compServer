@@ -97,7 +97,7 @@ export const centerAuthCheckFn = async (
 
 // emn akta route jeta admin access pabe but center na
 export const otpLimiter = rateLimit({
-  windowMs: 60 * 1000, // 1 minute
-  max: 2, // Limit each IP to 3 requests per minute
+  windowMs: 60 * 1000 * 5, // 1 minute
+  max: 1, // Limit each IP to 1 requests per minute
   message: { error: "Too many OTP requests. Try again later." },
 });

@@ -32,7 +32,11 @@ import {
   SendResetLink,
 } from "../controller/mainController.js";
 import { ErrorHandler } from "../errhandling.js";
-import { adminAuthCheckFn, centerAuthCheckFn } from "../middleware.js";
+import {
+  adminAuthCheckFn,
+  centerAuthCheckFn,
+  otpLimiter,
+} from "../middleware.js";
 import {
   loginFunc,
   loginCheckFunc,
@@ -71,8 +75,8 @@ router.route("/amountEdit").post(ErrorHandler(amountEdit));
 
 router.route("/noticecreate").post(ErrorHandler(noticecreate));
 router.route("/noticefetch").get(ErrorHandler(noticefetch));
-router.route("/ResetPassword").post(ErrorHandler(ResetPassword));
-router.route("/ChangePassword").post(ErrorHandler(ChangePassword));
+router.route("/ResetPassword").post(otpLimiter, ErrorHandler(ResetPassword));
+router.route("/ChangePassword").post(otpLimiter, ErrorHandler(ChangePassword));
 router.route("/SendResetLink").post(ErrorHandler(SendResetLink));
 router.route("/subjectAdd").post(ErrorHandler(subjectAdd));
 
