@@ -5,7 +5,11 @@ import dotenv from "dotenv";
 import express, { Request, Response } from "express";
 import router from "./router/mainRouter.js";
 import rateLimit from "express-rate-limit";
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import {
+  ListObjectsV2Command,
+  PutObjectCommand,
+  S3Client,
+} from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { Redis } from "ioredis";
 import { prisma } from "./client.js";
@@ -88,6 +92,29 @@ app.get("/generate-presigned-url", async (req, res) => {
     res.json({ url });
   } catch (err) {
     res.status(500).json({ error: err });
+  }
+});
+
+app.post("/fetch_aws_res", async (req, res) => {
+  try {
+    const { Prefix } = req.body;
+
+    const command = new ListObjectsV2Command({
+      Bucket: process.env.AWS_BUCKET_NAME,
+      Prefix,
+    });
+
+    const data = await s3.send(command);
+
+    const imageUrls =
+      data.Contents?.map((item) => {
+        if (!item.Key) return null;
+        return `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${item.Key}`;
+      }).filter(Boolean) || [];
+
+    res.json({ data: imageUrls });
+  } catch (error) {
+    logger.error(error);
   }
 });
 
