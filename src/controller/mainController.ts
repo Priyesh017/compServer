@@ -23,11 +23,11 @@ export async function createEnrollment(req: Request, res: Response) {
   const {
     name,
     dob,
-    fatherName: father,
-    motherName: mother,
-    Address: address,
+    father,
+    mother,
+    address,
     mobile: mobileNo,
-    wapp: wpNo,
+    whatsapp: wpNo,
     eduqualification,
     courseid,
     imageUrl,
@@ -38,7 +38,7 @@ export async function createEnrollment(req: Request, res: Response) {
     sex,
     pincode,
   } = req.body;
-
+  console.log(req.body);
   const dobUpdated = new Date(dob);
   const centerid = Number(req.centerId); //already number ache
 
