@@ -36,12 +36,13 @@ export async function createEnrollment(req: Request, res: Response) {
     idtype,
     idProofNo,
     sex,
+    pincode,
   } = req.body;
 
   const dobUpdated = new Date(dob);
   const centerid = Number(req.centerId); //already number ache
 
-  const data = await prisma.enrollment.create({
+  await prisma.enrollment.create({
     data: {
       father,
       category,
@@ -50,6 +51,7 @@ export async function createEnrollment(req: Request, res: Response) {
       idProof: idtype,
       idProofNo,
       mother,
+      pincode,
       address,
       status: "pending",
       dob: dobUpdated,
@@ -470,7 +472,11 @@ export async function TakeEnquiry(req: Request, res: Response) {
     category,
     nationality,
     mobileNo,
-    address: { AddressLine, vill, po, ps, pin },
+    AddressLine,
+    vill,
+    po,
+    ps,
+    pin,
     eduqualification,
     dist,
     coName,
@@ -482,9 +488,7 @@ export async function TakeEnquiry(req: Request, res: Response) {
     tradeLicense,
     bathroom,
     signatureLink,
-    stateCoordinator,
-    districtCoordinator,
-    subdistrictCoordinator,
+    ImageLink,
   } = req.body;
   const bathroomValue = bathroom == "Yes" ? true : false;
   const dobUpdated = new Date(dob);
@@ -518,9 +522,7 @@ export async function TakeEnquiry(req: Request, res: Response) {
       tradeLicense,
       bathroom: bathroomValue,
       signatureLink,
-      stateCoordinator,
-      districtCoordinator,
-      subdistrictCoordinator,
+      ImageLink,
     },
   });
 

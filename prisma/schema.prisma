@@ -71,42 +71,39 @@ model Center {
 }
 
 model Enrollment {
-  id              Int         @id @default(autoincrement())
-  Enrollmentno    Int         @unique @default(autoincrement())
-  IdCardNo        Int         @unique @default(autoincrement())
-  idCardLink      String      @default("")
-  admitLink       String      @default("")
-  certificateLink String      @default("")
-  marksheetLink   String      @default("")
-  imageLink       String      @default("")
-  CertificateNo   Int?        @unique @default(autoincrement())
-  name            String
-  dob             DateTime
-  father          String
-  mother          String
-  address         String
-  mobileNo        String
-  wpNo            String
-  sex             Sex
-  category        Category
-  nationality     Nationality
-  idProof         IdType
-  idProofNo       String
-
+  id               Int         @id @default(autoincrement())
+  Enrollmentno     Int         @unique @default(autoincrement())
+  IdCardNo         Int         @unique @default(autoincrement())
+  idCardLink       String      @default("notavl")
+  admitLink        String      @default("notavl")
+  certificateLink  String      @default("notavl")
+  marksheetLink    String      @default("notavl")
+  imageLink        String
+  CertificateNo    Int?        @unique @default(autoincrement())
+  name             String
+  dob              DateTime
+  father           String
+  mother           String
+  address          String
+  mobileNo         String
+  wpNo             String
+  sex              Sex
+  category         Category
+  nationality      Nationality
+  idProof          IdType
+  idProofNo        String
+  pincode          String
   eduqualification String
-  activated        Boolean @default(false)
-
-  examformFillup ExamForm?
-  marks          Marks?
-  amount         Amount?
-
-  course   Course @relation(fields: [courseId], references: [id])
-  courseId Int
-
-  center    Center     @relation(fields: [centerid], references: [id])
-  centerid  Int
-  createdAt DateTime   @default(now())
-  status    statusType
+  activated        Boolean     @default(false)
+  examformFillup   ExamForm?
+  marks            Marks?
+  amount           Amount?
+  course           Course      @relation(fields: [courseId], references: [id])
+  courseId         Int
+  center           Center      @relation(fields: [centerid], references: [id])
+  centerid         Int
+  createdAt        DateTime    @default(now())
+  status           statusType
 
   @@index([Enrollmentno, status])
 }
@@ -161,36 +158,34 @@ model Marks {
 }
 
 model Enquiry {
-  id                     Int         @id @default(autoincrement())
-  name                   String
-  email                  String      @unique
-  father                 String
-  coName                 String
-  dist                   String
-  state                  String
-  pin                    String
-  ps                     String
-  po                     String
-  vill                   String
-  dob                    DateTime
-  sex                    Sex
-  category               Category
-  nationality            Nationality
-  mobileNo               String
-  AddressLine            String
-  eduqualification       String
-  idProof                IdType
-  idProofNo              String
-  houseRoomNo            String
-  squareFit              String
-  tradeLicense           String
-  bathroom               Boolean
-  signatureLink          String
-  stateCoordinator       String
-  districtCoordinator    String
-  subdistrictCoordinator String
-  verified               Boolean     @default(false)
-  createdAt              DateTime    @default(now())
+  id               Int         @id @default(autoincrement())
+  name             String
+  email            String      @unique
+  father           String
+  coName           String
+  dist             String
+  state            String
+  pin              String
+  ps               String
+  po               String
+  vill             String
+  dob              DateTime
+  sex              Sex
+  category         Category
+  nationality      Nationality
+  mobileNo         String
+  AddressLine      String
+  eduqualification String
+  idProof          IdType
+  idProofNo        String
+  houseRoomNo      String
+  squareFit        String
+  tradeLicense     String
+  bathroom         Boolean
+  signatureLink    String
+  ImageLink        String
+  verified         Boolean     @default(false)
+  createdAt        DateTime    @default(now())
 }
 
 model Notices {
@@ -198,4 +193,10 @@ model Notices {
   heading String
   body    String
   upto    DateTime
+}
+
+model coordinator {
+  id                  Int    @id @default(autoincrement())
+  stateCoordinator    Json
+  districtCoordinator Json[]
 }
