@@ -38,7 +38,7 @@ export async function createEnrollment(req: Request, res: Response) {
     sex,
     pincode,
   } = req.body;
-  console.log(req.body);
+
   const dobUpdated = new Date(dob);
   const centerid = Number(req.centerId); //already number ache
 
@@ -487,14 +487,22 @@ export async function TakeEnquiry(req: Request, res: Response) {
     squareFit,
     tradeLicense,
     bathroom,
-    signatureLink,
-    ImageLink,
   } = req.body;
+  const Links = req.body.Links as {
+    url: string;
+    catg: "profile" | "signature";
+  }[];
+
   const bathroomValue = bathroom == "Yes" ? true : false;
   const dobUpdated = new Date(dob);
 
   const sx = sex.toUpperCase();
   const nt = nationality.toUpperCase();
+
+  const signatureLink = Links.find((elem) => elem.catg === "signature")
+    ?.url as string;
+  const ImageLink = Links.find((elem) => elem.catg === "profile")
+    ?.url as string;
 
   await prisma.enquiry.create({
     data: {

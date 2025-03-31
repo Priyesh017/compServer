@@ -33,40 +33,6 @@ interface dtype {
   mobileNo: string;
 }
 
-interface iData {
-  id: number;
-  marks: {
-    subject: string;
-    theoryMarks: string;
-    practicalMarks: string;
-    theoryFullMarks: string;
-    practicalFullMarks: string;
-  }[];
-  remarks: string;
-  EnrollmentNo: number;
-  grade: string;
-  totalMarks: number;
-  percentage: number;
-  verified: boolean;
-  createdAt: string;
-  year: string;
-  enrollment: {
-    name: string;
-    father: string;
-    dob: string;
-    imageLink: string;
-    CertificateNo: number;
-    course: {
-      CName: string;
-      Duration: number;
-    };
-    center: {
-      Centername: string;
-      address: string;
-      code: number;
-    };
-  };
-}
 type DataItem = {
   id: number;
   EnrollmentNo: number;
@@ -106,6 +72,7 @@ export type MarksheetData = {
     father: string;
     dob: string;
     imageLink: string;
+    CertificateNo: number;
     center: {
       Centername: string;
       code: number;
@@ -116,8 +83,6 @@ export type MarksheetData = {
       Duration: number;
     };
   };
-  year: string;
-
   marks: {
     subject: string;
     theoryMarks: string;
@@ -125,7 +90,7 @@ export type MarksheetData = {
     theoryFullMarks: string;
     practicalFullMarks: string;
   }[];
-
+  year: string;
   percentage: number;
   grade: string;
   EnrollmentNo: number;
@@ -241,7 +206,7 @@ export async function fillCertificate({
     center: { Centername, code },
   },
   EnrollmentNo,
-}: iData) {
+}: MarksheetData) {
   try {
     const studentData = {
       Name: name,
@@ -318,7 +283,7 @@ export async function fillCertificate({
     page.drawText(CName, {
       x: 153,
       y: pdfHeight - 341,
-      size: fontSize,
+      size: 15,
       color: rgb(0, 0, 0),
     });
 
@@ -357,7 +322,7 @@ export async function fillCertificate({
     page.drawText(Centername, {
       x: 200,
       y: pdfHeight - 417,
-      size: 16,
+      size: 12,
       color: rgb(0, 0, 0),
     });
 
@@ -367,7 +332,7 @@ export async function fillCertificate({
         : getRandomDate(parseInt(year));
 
     page.drawText(issueDate, {
-      x: 249,
+      x: 300,
       y: pdfHeight - 445,
       size: fontSize,
       color: rgb(0, 0, 0),
@@ -462,7 +427,7 @@ export async function filladmit({
     page.drawText(CName, {
       x: 165,
       y: pdfHeight - 207,
-      size: 13,
+      size: 10,
       color: rgb(0, 0, 0),
     });
 
@@ -523,7 +488,7 @@ export async function filladmit({
     });
 
     page.drawImage(image, {
-      x: 390, // Adjust X position
+      x: 391, // Adjust X position
       y: pdfHeight - 220, // Adjust Y position (PDF coordinates start from bottom-left)
       width: 90,
       height: 100,
@@ -819,10 +784,10 @@ export async function fillMarksheet(data: MarksheetData) {
       size: 12,
       color: rgb(0, 0, 0),
     });
-    page.drawText(data.enrollment.course.CName.toUpperCase(), {
+    page.drawText(data.enrollment.course.CName, {
       x: 136,
       y: pdfHeight - 269,
-      size: 12,
+      size: 10,
       color: rgb(0, 0, 0),
     });
     page.drawText(
@@ -834,7 +799,7 @@ export async function fillMarksheet(data: MarksheetData) {
         color: rgb(0, 0, 0),
       }
     );
-    page.drawText(data.enrollment.center.Centername.toUpperCase(), {
+    page.drawText(data.enrollment.center.Centername, {
       x: 130,
       y: pdfHeight - 294,
       size: 10,
@@ -996,6 +961,19 @@ export async function fillMarksheet(data: MarksheetData) {
     page.drawText(data.remarks, {
       x: 50,
       y: pdfHeight - 672,
+      size: 13,
+      font: boldFont,
+      color: rgb(0, 0, 0),
+    });
+
+    const issueDate =
+      data.year == new Date(Date.now()).getFullYear().toString()
+        ? new Date(Date.now()).toLocaleDateString()
+        : getRandomDate(parseInt(data.year));
+
+    page.drawText(issueDate, {
+      x: 150,
+      y: pdfHeight - 700,
       size: 13,
       font: boldFont,
       color: rgb(0, 0, 0),
