@@ -37,6 +37,12 @@ export async function createEnrollment(req: Request, res: Response) {
     idProofNo,
     sex,
     pincode,
+    vill,
+    dist,
+    pin,
+    po,
+    ps,
+    state,
   } = req.body;
 
   const dobUpdated = new Date(dob);
@@ -53,6 +59,12 @@ export async function createEnrollment(req: Request, res: Response) {
       mother,
       pincode,
       address,
+      dist,
+      pin,
+      po,
+      ps,
+      state,
+      vill,
       status: "pending",
       dob: dobUpdated,
       name,
@@ -64,7 +76,6 @@ export async function createEnrollment(req: Request, res: Response) {
         },
       },
       eduqualification,
-
       center: {
         connect: { id: centerid },
       },
@@ -615,7 +626,7 @@ export async function amountEdit(req: Request, res: Response) {
   const amountRemain = parseInt(ar);
   const updatedEnroll = parseInt(EnrollmentNo);
 
-  const data = await prisma.amount.upsert({
+  await prisma.amount.upsert({
     where: {
       EnrollmentNo: updatedEnroll,
     },
@@ -854,4 +865,34 @@ export async function noticecreate(req: Request, res: Response) {
   await redisClient.del("notices");
 
   res.json({ success: true });
+}
+
+export async function Coordinator_Update(req: Request, res: Response) {
+  const { coordinatorId, newCoordinator } = req.body;
+
+  await prisma.coordinator.update({
+    where: { id: coordinatorId },
+    data: {
+      districtCoordinator: {
+        push: newCoordinator, // Appends newCoordinator to the array
+      },
+    },
+  });
+
+  res.json({ success: true });
+}
+
+export async function Certi_fetch(req: Request, res: Response) {
+  const { Enrollmentno } = req.body;
+
+  const data = await prisma.enrollment.findFirst({
+    where: {
+      Enrollmentno,
+    },
+    select: {
+      certificateLink: true,
+    },
+  });
+
+  res.json({ data });
 }

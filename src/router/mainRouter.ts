@@ -30,6 +30,8 @@ import {
   ResetPassword,
   ChangePassword,
   SendResetLink,
+  Coordinator_Update,
+  Certi_fetch,
 } from "../controller/mainController.js";
 import { ErrorHandler } from "../errhandling.js";
 import {
@@ -79,6 +81,8 @@ router.route("/ResetPassword").post(otpLimiter, ErrorHandler(ResetPassword));
 router.route("/ChangePassword").post(otpLimiter, ErrorHandler(ChangePassword));
 router.route("/SendResetLink").post(ErrorHandler(SendResetLink));
 router.route("/subjectAdd").post(ErrorHandler(subjectAdd));
+router.route("/Coordinator_Update").post(ErrorHandler(Coordinator_Update));
+router.route("/Certi_fetch").post(ErrorHandler(Certi_fetch));
 
 //admin router
 

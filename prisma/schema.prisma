@@ -34,7 +34,6 @@ enum Nationality {
 
 enum statusType {
   passout
-  dropout
   pending
 }
 
@@ -85,6 +84,12 @@ model Enrollment {
   father           String
   mother           String
   address          String
+  dist             String
+  state            String
+  pin              String
+  ps               String
+  po               String
+  vill             String
   mobileNo         String
   wpNo             String
   sex              Sex
@@ -200,3 +205,5 @@ model coordinator {
   stateCoordinator    Json
   districtCoordinator Json[]
 }
+
+// json will be {name ,imageLink}
