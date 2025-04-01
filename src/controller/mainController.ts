@@ -39,11 +39,11 @@ export async function createEnrollment(req: Request, res: Response) {
     pincode,
     vill,
     dist,
-    pin,
     po,
     ps,
     state,
   } = req.body;
+  console.log(req.body);
 
   const dobUpdated = new Date(dob);
   const centerid = Number(req.centerId); //already number ache
@@ -60,7 +60,7 @@ export async function createEnrollment(req: Request, res: Response) {
       pincode,
       address,
       dist,
-      pin,
+      pin: pincode,
       po,
       ps,
       state,
