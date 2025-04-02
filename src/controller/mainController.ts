@@ -43,7 +43,6 @@ export async function createEnrollment(req: Request, res: Response) {
     ps,
     state,
   } = req.body;
-  console.log(req.body);
 
   const dobUpdated = new Date(dob);
   const centerid = Number(req.centerId); //already number ache
@@ -157,6 +156,7 @@ export async function AllEnrollments(req: Request, res: Response) {
       createdAt: true,
       Enrollmentno: true,
       status: true,
+      centerid: true,
       id: true,
       activated: true, // Ensure activated field is included
     },
@@ -406,6 +406,7 @@ export async function exmformsfetch(req: Request, res: Response) {
           imageLink: true,
           address: true,
           father: true,
+          centerid: true,
           center: {
             select: {
               Centername: true,
@@ -461,6 +462,7 @@ export async function marksheetfetch(req: Request, res: Response) {
               Centername: true,
               code: true,
               address: true,
+              id: true,
             },
           },
         },

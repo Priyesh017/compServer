@@ -38,7 +38,13 @@ enum statusType {
 }
 
 enum IdType {
-  aadhar
+  aadhaar
+  BirthCertificate
+  Admit
+}
+
+enum IdType2 {
+  aadhaar
   voter
   drivingLicense
 }
@@ -95,7 +101,7 @@ model Enrollment {
   sex              Sex
   category         Category
   nationality      Nationality
-  idProof          IdType
+  idProof          IdType2 //FIXME FRONTEND
   idProofNo        String
   pincode          String
   eduqualification String
@@ -108,9 +114,9 @@ model Enrollment {
   center           Center      @relation(fields: [centerid], references: [id])
   centerid         Int
   createdAt        DateTime    @default(now())
-  status           statusType
+  status           Json
 
-  @@index([Enrollmentno, status])
+  @@index([Enrollmentno])
 }
 
 model Course {
