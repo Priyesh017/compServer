@@ -64,7 +64,10 @@ export async function createEnrollment(req: Request, res: Response) {
       ps,
       state,
       vill,
-      status: "pending",
+      status: {
+        id: 1,
+        value: "pending",
+      },
       dob: dobUpdated,
       name,
       wpNo,
@@ -196,7 +199,7 @@ export async function generateadmit(req: Request, res: Response) {
 }
 
 export async function generateId(req: Request, res: Response) {
-  const { Enrollmentno } = req.body;
+  const { Enrollmentno } = req.body; //FIXME
 
   const data = await prisma.enrollment.findFirst({
     where: {
@@ -870,31 +873,20 @@ export async function noticecreate(req: Request, res: Response) {
 }
 
 export async function Coordinator_Update(req: Request, res: Response) {
-  const { coordinatorId, newCoordinator } = req.body;
-
-  await prisma.coordinator.update({
-    where: { id: coordinatorId },
-    data: {
-      districtCoordinator: {
-        push: newCoordinator, // Appends newCoordinator to the array
-      },
-    },
-  });
-
   res.json({ success: true });
 }
 
 export async function Certi_fetch(req: Request, res: Response) {
-  const { Enrollmentno } = req.body;
+  const { filteredVal } = req.body;
 
   const data = await prisma.enrollment.findFirst({
     where: {
-      Enrollmentno,
+      Enrollmentno: filteredVal,
     },
     select: {
       certificateLink: true,
     },
   });
 
-  res.json({ data });
+  res.json(data);
 }

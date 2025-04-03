@@ -101,7 +101,7 @@ model Enrollment {
   sex              Sex
   category         Category
   nationality      Nationality
-  idProof          IdType2 //FIXME FRONTEND
+  idProof          IdType
   idProofNo        String
   pincode          String
   eduqualification String
@@ -125,7 +125,16 @@ model Course {
   price      Int
   Duration   Int
   Enrollment Enrollment[]
-  subjects   String[]
+  subjects   Subject[]
+}
+
+model Subject {
+  id              Int    @id @default(autoincrement())
+  SubName         String
+  theoryFullMarks Int
+  practFullMarks  Int
+  courseId        Int
+  Course          Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
 }
 
 model Amount {
@@ -187,7 +196,7 @@ model Enquiry {
   mobileNo         String
   AddressLine      String
   eduqualification String
-  idProof          IdType
+  idProof          IdType2
   idProofNo        String
   houseRoomNo      String
   squareFit        String
@@ -206,10 +215,23 @@ model Notices {
   upto    DateTime
 }
 
-model coordinator {
-  id                  Int    @id @default(autoincrement())
-  stateCoordinator    Json
-  districtCoordinator Json[]
+model State {
+  id     Int    @id @default(autoincrement())
+  name   String
+  imgUrl String
 }
 
-// json will be {name ,imageLink}
+model District {
+  id           Int           @id @default(autoincrement())
+  name         String
+  imgUrl       String
+  subDistricts SubDistrict[]
+}
+
+model SubDistrict {
+  id         Int      @id @default(autoincrement())
+  name       String
+  imgUrl     String
+  districtId Int
+  district   District @relation(fields: [districtId], references: [id], onDelete: Cascade)
+}
