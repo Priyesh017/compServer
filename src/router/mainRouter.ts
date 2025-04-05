@@ -32,6 +32,9 @@ import {
   SendResetLink,
   Coordinator_Update,
   Certi_fetch,
+  Delete_Admin,
+  All_Center,
+  Fetch_Coordinator,
 } from "../controller/mainController.js";
 import { ErrorHandler } from "../errhandling.js";
 import {
@@ -56,36 +59,48 @@ router.route("/signupRoute").post(signupFunc);
 router.route("/studentLogin").post(ErrorHandler(studentLogin));
 
 router.route("/createCenter").post(ErrorHandler(createCenter));
+
+//center function
+
+router
+  .route("/exmformfillupDatafetch")
+  .post(centerAuthCheckFn, ErrorHandler(exmformfillupDatafetch));
 router
   .route("/AllEnrollments")
   .get(centerAuthCheckFn, ErrorHandler(AllEnrollments));
 router
   .route("/createEnrollment")
   .post(centerAuthCheckFn, ErrorHandler(createEnrollment));
+
+router.route("/amountFetch").post(centerAuthCheckFn, ErrorHandler(amountFetch));
+router.route("/amountEdit").post(centerAuthCheckFn, ErrorHandler(amountEdit));
+
+router.route("/Fetch_Coordinator").post(ErrorHandler(Fetch_Coordinator));
+
 router.route("/createCourse").post(ErrorHandler(createCourse));
-router
-  .route("/exmformfillupDatafetch")
-  .post(centerAuthCheckFn, ErrorHandler(exmformfillupDatafetch));
 router.route("/exmmarksentry").post(ErrorHandler(exmmarksentry));
 router.route("/exmformsfetch").get(ErrorHandler(exmformsfetch));
 router.route("/marksheetfetch").get(ErrorHandler(marksheetfetch));
 router.route("/TakeEnquiry").post(ErrorHandler(TakeEnquiry));
 router.route("/examFormFillup").post(ErrorHandler(examFormFillup));
-router.route("/amountFetch").post(centerAuthCheckFn, ErrorHandler(amountFetch));
-router.route("/FetchAllEnquiry").get(ErrorHandler(FetchAllEnquiry));
-router.route("/amountEdit").post(ErrorHandler(amountEdit));
 
 router.route("/noticecreate").post(ErrorHandler(noticecreate));
-router.route("/noticefetch").get(ErrorHandler(noticefetch));
+
 router.route("/ResetPassword").post(otpLimiter, ErrorHandler(ResetPassword));
 router.route("/ChangePassword").post(otpLimiter, ErrorHandler(ChangePassword));
-router.route("/SendResetLink").post(ErrorHandler(SendResetLink));
-router.route("/subjectAdd").post(ErrorHandler(subjectAdd));
-router.route("/Coordinator_Update").post(ErrorHandler(Coordinator_Update));
+router.route("/SendResetLink").post(otpLimiter, ErrorHandler(SendResetLink));
+
 router.route("/Certi_fetch").post(ErrorHandler(Certi_fetch));
 
 //admin router
 
+router
+  .route("/FetchAllEnquiry")
+  .get(adminAuthCheckFn, ErrorHandler(FetchAllEnquiry));
+router.route("/noticefetch").get(adminAuthCheckFn, ErrorHandler(noticefetch));
+router
+  .route("/Coordinator_Update")
+  .post(adminAuthCheckFn, ErrorHandler(Coordinator_Update));
 router
   .route("/VerifyEnquiry")
   .get(adminAuthCheckFn, ErrorHandler(VerifyEnquiry));
@@ -117,5 +132,12 @@ router
 router
   .route("/ActivateEnrollment")
   .post(adminAuthCheckFn, ErrorHandler(ActivateEnrollment));
+
+router
+  .route("/Delete_Admin")
+  .delete(adminAuthCheckFn, ErrorHandler(Delete_Admin));
+
+router.route("/All_Center").get(adminAuthCheckFn, ErrorHandler(All_Center));
+router.route("/subjectAdd").post(adminAuthCheckFn, ErrorHandler(subjectAdd));
 
 export default router;

@@ -60,7 +60,7 @@ model User {
   name             String
   role             Role      @default(CENTER)
   password         String
-  Center           Center[]  @relation("CenterAdmin")
+  Center           Center?
   resetToken       String?
   resetTokenExpiry DateTime?
 }
@@ -69,8 +69,8 @@ model Center {
   id         Int          @id @default(autoincrement())
   Centername String
   Student    Enrollment[]
-  admin      User         @relation("CenterAdmin", fields: [adminid], references: [id], onDelete: Cascade)
-  adminid    Int
+  admin      User         @relation(fields: [adminid], references: [id], onDelete: Cascade)
+  adminid    Int          @unique
   address    String
   code       Int          @default(autoincrement())
 }
@@ -111,7 +111,7 @@ model Enrollment {
   amount           Amount?
   course           Course      @relation(fields: [courseId], references: [id])
   courseId         Int
-  center           Center      @relation(fields: [centerid], references: [id])
+  center           Center      @relation(fields: [centerid], references: [id], onDelete: Cascade)
   centerid         Int
   createdAt        DateTime    @default(now())
   status           Json
@@ -224,6 +224,7 @@ model State {
 model District {
   id           Int           @id @default(autoincrement())
   name         String
+  DistrictName String
   imgUrl       String
   subDistricts SubDistrict[]
 }

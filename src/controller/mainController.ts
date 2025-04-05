@@ -96,6 +96,10 @@ export async function ActivateEnrollment(req: Request, res: Response) {
     },
     data: {
       activated: true,
+      status: {
+        id: 2,
+        val: "Enrollment Verified",
+      },
     },
   });
 
@@ -179,6 +183,10 @@ export async function generateCertificate(req: Request, res: Response) {
     },
     data: {
       certificateLink: link,
+      status: {
+        id: 5,
+        val: "passout",
+      },
     },
   });
   res.json({ success: true });
@@ -325,6 +333,14 @@ export async function exmformApprove(req: Request, res: Response) {
     },
     data: {
       verified: true,
+      enrollment: {
+        update: {
+          status: {
+            id: 3,
+            val: "Exam Form Approved",
+          },
+        },
+      },
     },
   });
 
@@ -355,6 +371,14 @@ export async function exmmarksApprove(req: Request, res: Response) {
     },
     data: {
       verified: true,
+      enrollment: {
+        update: {
+          status: {
+            id: 4,
+            val: "marksheet approved",
+          },
+        },
+      },
     },
   });
 
@@ -820,14 +844,22 @@ export async function ResetPassword(req: Request, res: Response) {
 
 export async function subjectAdd(req: Request, res: Response) {
   const { c, cid } = req.body;
-  const subjects = JSON.parse(c);
+  //FIXME incase of update and zod validation
 
   await prisma.course.update({
     where: {
       id: parseInt(cid),
     },
     data: {
-      subjects,
+      subjects: {
+        createMany: {
+          data: c.map((s: any) => ({
+            SubName: s.name,
+            theoryFullMarks: parseInt(s.theory),
+            practFullMarks: parseInt(s.practical),
+          })),
+        },
+      },
     },
   });
 
@@ -873,6 +905,21 @@ export async function noticecreate(req: Request, res: Response) {
 }
 
 export async function Coordinator_Update(req: Request, res: Response) {
+  const { coordinator, members } = req.body.fd;
+
+  await prisma.district.create({
+    data: {
+      imgUrl: coordinator.image,
+      name: coordinator.name,
+      DistrictName: coordinator.district,
+      subDistricts: {
+        createMany: {
+          data: members,
+        },
+      },
+    },
+  });
+
   res.json({ success: true });
 }
 
@@ -890,3 +937,40 @@ export async function Certi_fetch(req: Request, res: Response) {
 
   res.json(data);
 }
+
+export async function Delete_Admin(req: Request, res: Response) {
+  const { id } = req.body;
+
+  await prisma.user.delete({
+    where: {
+      id,
+    },
+  });
+
+  res.json({ success: true });
+}
+
+export async function All_Center(req: Request, res: Response) {
+  const data = await prisma.center.findMany({
+    where: {},
+    select: {
+      Centername: true,
+      id: true,
+    },
+  });
+
+  res.json(data);
+}
+
+export async function Fetch_Coordinator(req: Request, res: Response) {
+  const { DistrictName } = req.body;
+
+  const data = await prisma.district.findMany({
+    where: {
+      DistrictName,
+    },
+  });
+
+  res.json(data);
+}
+// FIXME pic storage khacche ki na!!!!

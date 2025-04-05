@@ -7,10 +7,34 @@ import {
   formatDateForJS,
 } from "../helper.js";
 import jwt from "jsonwebtoken";
+import { z } from "zod";
+
+const loginSchema = z.object({
+  email: z.string().email("Invalid email"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+});
+
+const StudentloginSchema = z.object({
+  enrollmentNo: z.string().email("Invalid enrollment"),
+  password: z.string().min(1, "Password must be at least 1 characters"),
+});
+
+const signupSchema = z.object({
+  name: z.string().min(1, "Name is required").max(50),
+  email: z.string().email("Invalid email"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+});
 
 export async function loginFunc(req: Request, res: Response) {
   try {
-    const { email, password } = req.body;
+    const isvalidated = loginSchema.safeParse(req.body);
+
+    if (!isvalidated.success) {
+      res.status(400).json({ message: "failed to parse" });
+      return;
+    }
+
+    const { email, password } = isvalidated.data;
 
     // Find the user
     const user = await prisma.user.findFirst({
@@ -39,8 +63,14 @@ export async function loginFunc(req: Request, res: Response) {
 
 export async function signupFunc(req: Request, res: Response) {
   try {
-    const { name, email, password } = req.body;
+    const isvalidated = signupSchema.safeParse(req.body);
 
+    if (!isvalidated.success) {
+      res.status(400).json({ message: "failed to parse" });
+      return;
+    }
+
+    const { name, email, password } = isvalidated.data;
     // check if user is already exists
     const user = await prisma.user.findFirst({
       where: {
@@ -111,7 +141,14 @@ export async function logoutfunc(req: Request, res: Response) {
 }
 
 export async function studentLogin(req: Request, res: Response) {
-  const { enrollmentNo, password } = req.body;
+  const isvalidated = StudentloginSchema.safeParse(req.body);
+
+  if (!isvalidated.success) {
+    res.status(400).json({ message: "failed to parse" });
+    return;
+  }
+
+  const { enrollmentNo, password } = isvalidated.data;
 
   const dob = formatDateForJS(password);
 
