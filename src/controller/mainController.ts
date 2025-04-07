@@ -17,6 +17,7 @@ import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import { redisClient } from "../index.js";
 import logger from "../logger.js";
+import { z } from "zod";
 
 export async function createEnrollment(req: Request, res: Response) {
   //take course id from client
@@ -47,7 +48,7 @@ export async function createEnrollment(req: Request, res: Response) {
   const dobUpdated = new Date(dob);
   const centerid = Number(req.centerId); //already number ache
 
-  await prisma.enrollment.create({
+  const data = await prisma.enrollment.create({
     data: {
       father,
       category,
@@ -66,7 +67,7 @@ export async function createEnrollment(req: Request, res: Response) {
       vill,
       status: {
         id: 1,
-        value: "pending",
+        val: "pending",
       },
       dob: dobUpdated,
       name,
@@ -85,12 +86,12 @@ export async function createEnrollment(req: Request, res: Response) {
     },
   });
 
-  res.json({ success: true });
+  res.json({ success: true, EnrollmentNo: data.EnrollmentNo });
 }
 
 export async function ActivateEnrollment(req: Request, res: Response) {
   const { id } = req.body;
-  const val = await prisma.enrollment.update({
+  await prisma.enrollment.update({
     where: {
       id,
     },
@@ -161,7 +162,7 @@ export async function AllEnrollments(req: Request, res: Response) {
       marksheetLink: true,
       name: true,
       createdAt: true,
-      Enrollmentno: true,
+      EnrollmentNo: true,
       status: true,
       centerid: true,
       id: true,
@@ -179,7 +180,7 @@ export async function generateCertificate(req: Request, res: Response) {
 
   await prisma.enrollment.update({
     where: {
-      Enrollmentno: parseInt(req.body.data.EnrollmentNo),
+      EnrollmentNo: parseInt(req.body.data.EnrollmentNo),
     },
     data: {
       certificateLink: link,
@@ -197,7 +198,7 @@ export async function generateadmit(req: Request, res: Response) {
 
   await prisma.enrollment.update({
     where: {
-      Enrollmentno: parseInt(req.body.enrollment.EnrollmentNo),
+      EnrollmentNo: parseInt(req.body.enrollment.EnrollmentNo),
     },
     data: {
       admitLink: link,
@@ -206,12 +207,27 @@ export async function generateadmit(req: Request, res: Response) {
   res.json({ success: true });
 }
 
+export const generateIdSchema = z.object({
+  EnrollmentNo: z
+    .number()
+    .int("Enrollment No must be Integer")
+    .positive("Enrollment No must be Positive")
+    .lte(999999, "Enrollment No is too large"),
+});
+
 export async function generateId(req: Request, res: Response) {
-  const { Enrollmentno } = req.body; //FIXME
+  const isvalidated = generateIdSchema.safeParse(req.body);
+
+  if (!isvalidated.success) {
+    res.status(400).json({ message: "failed to parse" });
+    return;
+  }
+
+  const { EnrollmentNo } = isvalidated.data;
 
   const data = await prisma.enrollment.findFirst({
     where: {
-      Enrollmentno: parseInt(Enrollmentno),
+      EnrollmentNo,
     },
     select: {
       address: true,
@@ -224,7 +240,7 @@ export async function generateId(req: Request, res: Response) {
         },
       },
       IdCardNo: true,
-      Enrollmentno: true,
+      EnrollmentNo: true,
       name: true,
       course: {
         select: {
@@ -243,7 +259,7 @@ export async function generateId(req: Request, res: Response) {
 
   await prisma.enrollment.update({
     where: {
-      Enrollmentno: data.Enrollmentno,
+      EnrollmentNo: data.EnrollmentNo,
     },
     data: {
       idCardLink: link,
@@ -264,7 +280,7 @@ export async function generateMarksheet(req: Request, res: Response) {
 
   await prisma.enrollment.update({
     where: {
-      Enrollmentno: data.EnrollmentNo,
+      EnrollmentNo: data.EnrollmentNo,
     },
     data: {
       marksheetLink: link,
@@ -276,12 +292,12 @@ export async function generateMarksheet(req: Request, res: Response) {
 
 export async function exmformfillupDatafetch(req: Request, res: Response) {
   // branch admin korbe
-  const { enrollmentNo } = req.body;
+  const { EnrollmentNo } = req.body;
   const centerid = req.centerId;
 
   const data = await prisma.enrollment.findFirst({
     where: {
-      Enrollmentno: parseInt(enrollmentNo),
+      EnrollmentNo: parseInt(EnrollmentNo),
       centerid,
     },
     select: {
@@ -292,10 +308,16 @@ export async function exmformfillupDatafetch(req: Request, res: Response) {
       wpNo: true,
       mobileNo: true,
       address: true,
+      activated: true,
       center: {
         select: {
           Centername: true,
           address: true,
+        },
+      },
+      examformFillup: {
+        select: {
+          verified: true,
         },
       },
       course: {
@@ -313,7 +335,7 @@ export async function exmformfillupDatafetch(req: Request, res: Response) {
 export async function createCourse(req: Request, res: Response) {
   const { Duration, CName, price } = req.body;
 
-  const data = await prisma.course.create({
+  await prisma.course.create({
     data: {
       Duration,
       CName,
@@ -429,7 +451,7 @@ export async function exmformsfetch(req: Request, res: Response) {
           name: true,
           mobileNo: true,
           wpNo: true,
-          Enrollmentno: true,
+          EnrollmentNo: true,
           imageLink: true,
           address: true,
           father: true,
@@ -502,6 +524,7 @@ export async function marksheetfetch(req: Request, res: Response) {
 
   res.json({ success: true, data });
 }
+
 export async function TakeEnquiry(req: Request, res: Response) {
   const {
     name,
@@ -583,9 +606,10 @@ export async function FetchAllEnquiry(req: Request, res: Response) {
 
   res.json({ data });
 }
+
 export async function examFormFillup(req: Request, res: Response) {
   const {
-    enrollmentNo,
+    EnrollmentNo,
     ATI_CODE,
     ExamCenterCode,
     lastpaymentR,
@@ -596,28 +620,28 @@ export async function examFormFillup(req: Request, res: Response) {
     SemNo,
   } = req.body;
 
-  const data = await prisma.examForm.create({
-    data: {
-      EnrollmentNo: parseInt(enrollmentNo),
-      ATI_CODE,
-      ExamCenterCode,
-      practExmdate: ped,
-      theoryExamdate: ted,
-      practExmtime: pet,
-      theoryExmtime: tet,
-      sem: SemNo,
-    },
-  });
-
-  await prisma.amount.update({
-    where: {
-      EnrollmentNo: data.EnrollmentNo,
-    },
-    data: {
-      lastPaymentRecieptno: lastpaymentR,
-    },
-  });
-
+  await prisma.$transaction([
+    prisma.amount.update({
+      where: {
+        EnrollmentNo: parseInt(EnrollmentNo),
+      },
+      data: {
+        lastPaymentRecieptno: lastpaymentR,
+      },
+    }),
+    prisma.examForm.create({
+      data: {
+        EnrollmentNo: parseInt(EnrollmentNo),
+        ATI_CODE,
+        ExamCenterCode,
+        practExmdate: ped,
+        theoryExamdate: ted,
+        practExmtime: pet,
+        theoryExmtime: tet,
+        sem: SemNo,
+      },
+    }),
+  ]);
   res.json({ success: true });
 }
 
@@ -630,7 +654,7 @@ export async function amountFetch(req: Request, res: Response) {
     },
     select: {
       name: true,
-      Enrollmentno: true,
+      EnrollmentNo: true,
       id: true,
       amount: {
         select: {
@@ -664,7 +688,7 @@ export async function amountEdit(req: Request, res: Response) {
       amountRemain,
       enrollment: {
         connect: {
-          Enrollmentno: updatedEnroll,
+          EnrollmentNo: updatedEnroll,
         },
       },
     },
@@ -905,18 +929,13 @@ export async function noticecreate(req: Request, res: Response) {
 }
 
 export async function Coordinator_Update(req: Request, res: Response) {
-  const { coordinator, members } = req.body.fd;
+  const { name, dist, imageUrl } = req.body;
 
   await prisma.district.create({
     data: {
-      imgUrl: coordinator.image,
-      name: coordinator.name,
-      DistrictName: coordinator.district,
-      subDistricts: {
-        createMany: {
-          data: members,
-        },
-      },
+      imgUrl: imageUrl,
+      name: name,
+      DistrictName: dist,
     },
   });
 
@@ -928,7 +947,7 @@ export async function Certi_fetch(req: Request, res: Response) {
 
   const data = await prisma.enrollment.findFirst({
     where: {
-      Enrollmentno: filteredVal,
+      EnrollmentNo: filteredVal,
     },
     select: {
       certificateLink: true,
@@ -956,6 +975,12 @@ export async function All_Center(req: Request, res: Response) {
     select: {
       Centername: true,
       id: true,
+      admin: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
     },
   });
 
@@ -963,14 +988,32 @@ export async function All_Center(req: Request, res: Response) {
 }
 
 export async function Fetch_Coordinator(req: Request, res: Response) {
-  const { DistrictName } = req.body;
+  const id = req.userId;
 
-  const data = await prisma.district.findMany({
+  const data = await prisma.user.findFirst({
     where: {
-      DistrictName,
+      id,
+    },
+    select: {
+      enquiry: {
+        select: {
+          dist: true,
+        },
+      },
     },
   });
 
-  res.json(data);
+  if (!data?.enquiry?.dist) {
+    res.json({ success: false });
+  }
+
+  const data2 = await prisma.district.findFirst({
+    where: {
+      DistrictName: data?.enquiry?.dist,
+    },
+  });
+
+  res.json({ success: true, data2 });
 }
+
 // FIXME pic storage khacche ki na!!!!

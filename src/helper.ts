@@ -27,7 +27,7 @@ interface dtype {
   course: {
     CName: string;
   };
-  Enrollmentno: number;
+  EnrollmentNo: number;
   IdCardNo: number;
   imageLink: string;
   mobileNo: string;
@@ -49,7 +49,7 @@ type DataItem = {
     name: string;
     mobileNo: string;
     wpNo: string;
-    Enrollmentno: string;
+    EnrollmentNo: number;
     imageLink: string;
     address: string;
     center: {
@@ -522,7 +522,7 @@ export async function filladmit({
 }
 
 export async function fillId({
-  Enrollmentno,
+  EnrollmentNo,
   IdCardNo,
   address,
   imageLink,
@@ -582,10 +582,10 @@ export async function fillId({
       size: 50,
       color: rgb(0, 0, 0),
     });
-    const rem = 6 - countDigits(Enrollmentno);
+    const rem = 6 - countDigits(EnrollmentNo);
     const remcode = 6 - countDigits(code);
 
-    const paddedNumber = Enrollmentno.toString().padStart(rem, "0");
+    const paddedNumber = EnrollmentNo.toString().padStart(rem, "0");
     const paddedCode = code.toString().padStart(remcode, "0");
 
     page.drawText(`ENROLLMENT: YCTC${paddedCode}/${paddedNumber}`, {

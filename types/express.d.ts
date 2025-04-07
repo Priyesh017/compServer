@@ -4,5 +4,6 @@ declare module "express" {
   export interface Request {
     Role?: string;
     centerId?: number;
+    userId?: number;
   }
 }

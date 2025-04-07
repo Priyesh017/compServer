@@ -63,6 +63,9 @@ model User {
   Center           Center?
   resetToken       String?
   resetTokenExpiry DateTime?
+
+  enquiry   Enquiry? @relation(fields: [enquiryid], references: [id])
+  enquiryid Int?     @unique
 }
 
 model Center {
@@ -72,12 +75,12 @@ model Center {
   admin      User         @relation(fields: [adminid], references: [id], onDelete: Cascade)
   adminid    Int          @unique
   address    String
-  code       Int          @default(autoincrement())
+  code       Int          @unique @default(autoincrement())
 }
 
 model Enrollment {
   id               Int         @id @default(autoincrement())
-  Enrollmentno     Int         @unique @default(autoincrement())
+  EnrollmentNo     Int         @unique @default(autoincrement())
   IdCardNo         Int         @unique @default(autoincrement())
   idCardLink       String      @default("notavl")
   admitLink        String      @default("notavl")
@@ -116,7 +119,7 @@ model Enrollment {
   createdAt        DateTime    @default(now())
   status           Json
 
-  @@index([Enrollmentno])
+  @@index([EnrollmentNo, centerid])
 }
 
 model Course {
@@ -142,14 +145,14 @@ model Amount {
   TotalPaid            Int
   amountRemain         Int
   lastPaymentRecieptno String?
-  enrollment           Enrollment @relation(fields: [EnrollmentNo], references: [Enrollmentno], onDelete: Cascade)
+  enrollment           Enrollment @relation(fields: [EnrollmentNo], references: [EnrollmentNo], onDelete: Cascade)
   EnrollmentNo         Int        @unique
   createdAt            DateTime   @default(now())
 }
 
 model ExamForm {
   id             Int        @id @default(autoincrement())
-  enrollment     Enrollment @relation(fields: [EnrollmentNo], references: [Enrollmentno], onDelete: Cascade)
+  enrollment     Enrollment @relation(fields: [EnrollmentNo], references: [EnrollmentNo], onDelete: Cascade)
   EnrollmentNo   Int        @unique
   verified       Boolean    @default(false)
   createdAt      DateTime   @default(now())
@@ -166,7 +169,7 @@ model Marks {
   id           Int        @id @default(autoincrement())
   marks        Json
   remarks      Remark
-  enrollment   Enrollment @relation(fields: [EnrollmentNo], references: [Enrollmentno], onDelete: Cascade)
+  enrollment   Enrollment @relation(fields: [EnrollmentNo], references: [EnrollmentNo], onDelete: Cascade)
   EnrollmentNo Int        @unique
   grade        String
   totalMarks   Float
@@ -174,7 +177,7 @@ model Marks {
   verified     Boolean    @default(false)
   createdAt    DateTime   @default(now())
   year         String
-  serialNo     Int        @default(autoincrement())
+  serialNo     Int        @unique @default(autoincrement())
 }
 
 model Enquiry {
@@ -206,6 +209,7 @@ model Enquiry {
   ImageLink        String
   verified         Boolean     @default(false)
   createdAt        DateTime    @default(now())
+  admin            User?
 }
 
 model Notices {
@@ -222,17 +226,8 @@ model State {
 }
 
 model District {
-  id           Int           @id @default(autoincrement())
+  id           Int    @id @default(autoincrement())
   name         String
   DistrictName String
   imgUrl       String
-  subDistricts SubDistrict[]
-}
-
-model SubDistrict {
-  id         Int      @id @default(autoincrement())
-  name       String
-  imgUrl     String
-  districtId Int
-  district   District @relation(fields: [districtId], references: [id], onDelete: Cascade)
 }

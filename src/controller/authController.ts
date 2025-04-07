@@ -15,7 +15,7 @@ const loginSchema = z.object({
 });
 
 const StudentloginSchema = z.object({
-  enrollmentNo: z.string().email("Invalid enrollment"),
+  EnrollmentNo: z.number().min(1, "Invalid enrollment"),
   password: z.string().min(1, "Password must be at least 1 characters"),
 });
 
@@ -44,20 +44,20 @@ export async function loginFunc(req: Request, res: Response) {
     });
 
     if (!user) {
-      res.status(200).json({ error: "User not found" });
+      res.status(200).json({ message: "User not found" });
       return;
     }
     // Compare passwords
     const isPasswordValid = await Bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
-      res.status(200).json({ error: "Invalid credentials" });
+      res.status(200).json({ message: "Invalid credentials" });
       return;
     }
 
     Cookiehelper(res, user);
   } catch (error) {
-    res.status(500).json({ error: "Login failed" });
+    res.status(500).json({ message: "Login failed" });
   }
 }
 
@@ -96,7 +96,7 @@ export async function signupFunc(req: Request, res: Response) {
 
     res.status(201).json({ message: "User registered successfully" });
   } catch (error) {
-    res.status(400).json({ message: "User registration failed" });
+    res.status(400).json({ message: "User registration failed", error });
   }
 }
 
@@ -116,7 +116,7 @@ export async function loginCheckFunc(req: Request, res: Response) {
     if (user.eno) {
       const data = await prisma.enrollment.findFirst({
         where: {
-          Enrollmentno: parseInt(user.eno),
+          EnrollmentNo: parseInt(user.eno),
         },
       });
 
@@ -124,6 +124,7 @@ export async function loginCheckFunc(req: Request, res: Response) {
       return;
     }
 
+    req.userId = user.id;
     res.json({ loggedIn: true, user });
   } catch (err) {
     res.json({ loggedIn: false }).status(401);
@@ -148,13 +149,13 @@ export async function studentLogin(req: Request, res: Response) {
     return;
   }
 
-  const { enrollmentNo, password } = isvalidated.data;
+  const { EnrollmentNo, password } = isvalidated.data;
 
   const dob = formatDateForJS(password);
 
   const data = await prisma.enrollment.findFirst({
     where: {
-      Enrollmentno: parseInt(enrollmentNo),
+      EnrollmentNo,
       dob,
     },
   });
@@ -164,7 +165,7 @@ export async function studentLogin(req: Request, res: Response) {
     return;
   }
 
-  const token = jwt.sign({ eno: enrollmentNo }, process.env.TOKEN_SECRET!, {
+  const token = jwt.sign({ eno: EnrollmentNo }, process.env.TOKEN_SECRET!, {
     expiresIn: "1h",
   });
   res

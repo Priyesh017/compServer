@@ -89,15 +89,27 @@ export const centerAuthCheckFn = async (
     res.status(403).json({ message: "Forbidden: Not a center admin user" });
     return;
   } catch (error) {
-    console.error("Auth Middleware Error:", error);
+    logger.error("Auth Middleware Error:", error);
     res.status(401).json({ message: "Unauthorized: Invalid or expired token" });
     return;
   }
 };
 
-// emn akta route jeta admin access pabe but center na
 export const otpLimiter = rateLimit({
-  windowMs: 60 * 1000 * 5, // 1 minute
-  max: 1, // Limit each IP to 1 requests per minute
-  message: { error: "Too many OTP requests. Try again later." },
+  windowMs: 60 * 1000 * 5, // 5 minute
+  max: 1, // Limit each IP to 1 requests per 5 minute
+  message: { message: "Too many OTP requests. Try again later." },
 });
+
+export const verifyInternalApiKey = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const apiKey = req.headers["x-internal-api-key"];
+  if (apiKey !== process.env.INTERNAL_API_KEY) {
+    res.status(403).json({ message: "Forbidden" });
+    return;
+  }
+  next();
+};
