@@ -745,14 +745,18 @@ export async function VerifyEnquiry(req: Request, res: Response) {
       select: {
         AddressLine: true,
         vill: true,
+        id: true,
       },
     });
+
+    if (!tempdata) return;
 
     const newUser = await prisma.user.create({
       data: {
         email,
         password: hashedPassword,
         name,
+        enquiryid: tempdata.id,
       },
     });
 
@@ -764,6 +768,16 @@ export async function VerifyEnquiry(req: Request, res: Response) {
       },
     });
     sendUpdate(2, "center created");
+
+    await prisma.enquiry.update({
+      where: {
+        id: tempdata.id,
+      },
+      data: {
+        verified: true,
+      },
+    });
+
     res.end();
   } catch (error) {
     logger.error("Error in VerifyEnquiry:", error);
@@ -990,6 +1004,11 @@ export async function All_Center(req: Request, res: Response) {
 export async function Fetch_Coordinator(req: Request, res: Response) {
   const id = req.userId;
 
+  if (!id) {
+    res.json({ success: false });
+    return;
+  }
+
   const data = await prisma.user.findFirst({
     where: {
       id,
@@ -1005,6 +1024,7 @@ export async function Fetch_Coordinator(req: Request, res: Response) {
 
   if (!data?.enquiry?.dist) {
     res.json({ success: false });
+    return;
   }
 
   const data2 = await prisma.district.findFirst({

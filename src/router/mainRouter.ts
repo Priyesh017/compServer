@@ -95,9 +95,11 @@ router
 router
   .route("/ChangePassword")
   .post(otpLimiter, centerAuthCheckFn, ErrorHandler(ChangePassword));
+router
+  .route("/Fetch_Coordinator")
+  .get(centerAuthCheckFn, ErrorHandler(Fetch_Coordinator));
 
 //public route
-router.route("/Fetch_Coordinator").post(ErrorHandler(Fetch_Coordinator));
 router.route("/TakeEnquiry").post(ErrorHandler(TakeEnquiry));
 router.route("/ResetPassword").post(otpLimiter, ErrorHandler(ResetPassword));
 router.route("/SendResetLink").post(otpLimiter, ErrorHandler(SendResetLink));

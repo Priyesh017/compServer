@@ -124,7 +124,6 @@ export async function loginCheckFunc(req: Request, res: Response) {
       return;
     }
 
-    req.userId = user.id;
     res.json({ loggedIn: true, user });
   } catch (err) {
     res.json({ loggedIn: false }).status(401);

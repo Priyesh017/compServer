@@ -5,7 +5,7 @@ import rateLimit from "express-rate-limit";
 import logger from "./logger.js";
 
 interface iuserWithoutPassword {
-  id: string;
+  id: number;
   email: string;
   name: string;
   role: "ADMIN" | "CENTER";
@@ -64,7 +64,7 @@ export const centerAuthCheckFn = async (
     if (user.role === "CENTER") {
       const center = await prisma.center.findFirst({
         where: {
-          adminid: parseInt(user.id),
+          adminid: user.id,
         },
         select: {
           id: true,
@@ -79,6 +79,8 @@ export const centerAuthCheckFn = async (
       }
 
       req.centerId = center.id;
+      req.userId = user.id;
+
       return next();
     }
 
