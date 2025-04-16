@@ -35,6 +35,7 @@ import {
   Delete_Admin,
   All_Center,
   Fetch_Coordinator,
+  updateEnquiry,
 } from "../controller/mainController.js";
 import { ErrorHandler } from "../errhandling.js";
 import {
@@ -154,5 +155,8 @@ router
 
 router.route("/All_Center").get(adminAuthCheckFn, ErrorHandler(All_Center));
 router.route("/subjectAdd").post(adminAuthCheckFn, ErrorHandler(subjectAdd));
+router
+  .route("/updateEnquiry")
+  .post(adminAuthCheckFn, ErrorHandler(updateEnquiry));
 
 export default router;

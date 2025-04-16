@@ -100,7 +100,7 @@ model Enrollment {
   po               String
   vill             String
   mobileNo         String
-  wpNo             String
+  email            String
   sex              Sex
   category         Category
   nationality      Nationality

@@ -20,7 +20,6 @@ import logger from "../logger.js";
 import { z } from "zod";
 
 export async function createEnrollment(req: Request, res: Response) {
-  //take course id from client
   const {
     name,
     dob,
@@ -28,7 +27,7 @@ export async function createEnrollment(req: Request, res: Response) {
     mother,
     address,
     mobile: mobileNo,
-    whatsapp: wpNo,
+    email,
     eduqualification,
     courseid,
     imageUrl,
@@ -71,7 +70,7 @@ export async function createEnrollment(req: Request, res: Response) {
       },
       dob: dobUpdated,
       name,
-      wpNo,
+      email,
       sex,
       course: {
         connect: {
@@ -305,7 +304,7 @@ export async function exmformfillupDatafetch(req: Request, res: Response) {
       father: true,
       dob: true,
       IdCardNo: true,
-      wpNo: true,
+      email: true,
       mobileNo: true,
       address: true,
       activated: true,
@@ -450,7 +449,7 @@ export async function exmformsfetch(req: Request, res: Response) {
         select: {
           name: true,
           mobileNo: true,
-          wpNo: true,
+          email: true,
           EnrollmentNo: true,
           imageLink: true,
           address: true,
@@ -1032,4 +1031,40 @@ export async function Fetch_Coordinator(req: Request, res: Response) {
   res.json({ success: true, data2 });
 }
 
+export const updateEnquiry = async (req: Request, res: Response) => {
+  const id = Number(req.params.id);
+
+  const updates = req.body;
+
+  const updated = await prisma.enquiry.update({
+    where: { id },
+    data: {
+      name: updates.name,
+      email: updates.email,
+      father: updates.father,
+      coName: updates.coName,
+      dob: new Date(updates.dob),
+      mobileNo: updates.mobileNo,
+      AddressLine: updates.AddressLine,
+      vill: updates.vill,
+      po: updates.po,
+      ps: updates.ps,
+      pin: updates.pin,
+      state: updates.state,
+      dist: updates.dist,
+      nationality: updates.nationality,
+      sex: updates.sex,
+      category: updates.category,
+      idProof: updates.idProof,
+      idProofNo: updates.idProofNo,
+      eduqualification: updates.eduqualification,
+      bathroom: updates.bathroom,
+      tradeLicense: updates.tradeLicense,
+      squareFit: updates.squareFit,
+      houseRoomNo: updates.houseRoomNo,
+    },
+  });
+
+  res.status(200).json({ message: "Update successful", updated });
+};
 // FIXME pic storage khacche ki na!!!!

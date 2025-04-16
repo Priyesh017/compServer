@@ -48,7 +48,7 @@ type DataItem = {
   enrollment: {
     name: string;
     mobileNo: string;
-    wpNo: string;
+    email: string;
     EnrollmentNo: number;
     imageLink: string;
     address: string;
