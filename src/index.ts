@@ -52,12 +52,7 @@ app.use(helmet());
 app.use(generalLimiter);
 app.use(express.json({ limit: "20kb" }));
 app.use(express.urlencoded({ limit: "20kb", extended: true }));
-app.use((_, res, next) => {
-  res.setTimeout(10_000, () => {
-    return res.status(504).json({ message: "Request Timeout" });
-  });
-  next();
-});
+
 app.use(cookieParser(process.env.COOKIEP));
 app.use(
   cors({

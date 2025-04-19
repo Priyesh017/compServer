@@ -1,5 +1,6 @@
 generator client {
   provider = "prisma-client-js"
+  output   = "../src/generate"
 }
 
 datasource db {
@@ -210,6 +211,7 @@ model Enquiry {
   verified         Boolean     @default(false)
   createdAt        DateTime    @default(now())
   admin            User?
+  Subscription     DateTime?
 }
 
 model Notices {

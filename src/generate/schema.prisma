@@ -1,0 +1,235 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generate"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  CENTER
+  ADMIN
+}
+
+enum Sex {
+  MALE
+  FEMALE
+  TRANSGENDER
+}
+
+enum Category {
+  SC
+  ST
+  GENERAL
+  OBC
+  PH
+  OTHERS
+}
+
+enum Nationality {
+  INDIAN
+  FOREIGNER
+}
+
+enum statusType {
+  passout
+  pending
+}
+
+enum IdType {
+  aadhaar
+  BirthCertificate
+  Admit
+}
+
+enum IdType2 {
+  aadhaar
+  voter
+  drivingLicense
+}
+
+enum Remark {
+  PASS
+  FAIL
+}
+
+model User {
+  id               Int       @id @default(autoincrement())
+  email            String    @unique
+  name             String
+  role             Role      @default(CENTER)
+  password         String
+  Center           Center?
+  resetToken       String?
+  resetTokenExpiry DateTime?
+
+  enquiry   Enquiry? @relation(fields: [enquiryid], references: [id])
+  enquiryid Int?     @unique
+}
+
+model Center {
+  id         Int          @id @default(autoincrement())
+  Centername String
+  Student    Enrollment[]
+  admin      User         @relation(fields: [adminid], references: [id], onDelete: Cascade)
+  adminid    Int          @unique
+  address    String
+  code       Int          @unique @default(autoincrement())
+}
+
+model Enrollment {
+  id               Int         @id @default(autoincrement())
+  EnrollmentNo     Int         @unique @default(autoincrement())
+  IdCardNo         Int         @unique @default(autoincrement())
+  idCardLink       String      @default("notavl")
+  admitLink        String      @default("notavl")
+  certificateLink  String      @default("notavl")
+  marksheetLink    String      @default("notavl")
+  imageLink        String
+  CertificateNo    Int?        @unique @default(autoincrement())
+  name             String
+  dob              DateTime
+  father           String
+  mother           String
+  address          String
+  dist             String
+  state            String
+  pin              String
+  ps               String
+  po               String
+  vill             String
+  mobileNo         String
+  email            String
+  sex              Sex
+  category         Category
+  nationality      Nationality
+  idProof          IdType
+  idProofNo        String
+  pincode          String
+  eduqualification String
+  activated        Boolean     @default(false)
+  examformFillup   ExamForm?
+  marks            Marks?
+  amount           Amount?
+  course           Course      @relation(fields: [courseId], references: [id])
+  courseId         Int
+  center           Center      @relation(fields: [centerid], references: [id], onDelete: Cascade)
+  centerid         Int
+  createdAt        DateTime    @default(now())
+  status           Json
+
+  @@index([EnrollmentNo, centerid])
+}
+
+model Course {
+  id         Int          @id @default(autoincrement())
+  CName      String
+  price      Int
+  Duration   Int
+  Enrollment Enrollment[]
+  subjects   Subject[]
+}
+
+model Subject {
+  id              Int    @id @default(autoincrement())
+  SubName         String
+  theoryFullMarks Int
+  practFullMarks  Int
+  courseId        Int
+  Course          Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+}
+
+model Amount {
+  id                   Int        @id @default(autoincrement())
+  TotalPaid            Int
+  amountRemain         Int
+  lastPaymentRecieptno String?
+  enrollment           Enrollment @relation(fields: [EnrollmentNo], references: [EnrollmentNo], onDelete: Cascade)
+  EnrollmentNo         Int        @unique
+  createdAt            DateTime   @default(now())
+}
+
+model ExamForm {
+  id             Int        @id @default(autoincrement())
+  enrollment     Enrollment @relation(fields: [EnrollmentNo], references: [EnrollmentNo], onDelete: Cascade)
+  EnrollmentNo   Int        @unique
+  verified       Boolean    @default(false)
+  createdAt      DateTime   @default(now())
+  ExamCenterCode String
+  ATI_CODE       String
+  practExmdate   String
+  theoryExamdate String
+  practExmtime   String
+  theoryExmtime  String
+  sem            String
+}
+
+model Marks {
+  id           Int        @id @default(autoincrement())
+  marks        Json
+  remarks      Remark
+  enrollment   Enrollment @relation(fields: [EnrollmentNo], references: [EnrollmentNo], onDelete: Cascade)
+  EnrollmentNo Int        @unique
+  grade        String
+  totalMarks   Float
+  percentage   Float
+  verified     Boolean    @default(false)
+  createdAt    DateTime   @default(now())
+  year         String
+  serialNo     Int        @unique @default(autoincrement())
+}
+
+model Enquiry {
+  id               Int         @id @default(autoincrement())
+  name             String
+  email            String      @unique
+  father           String
+  coName           String
+  dist             String
+  state            String
+  pin              String
+  ps               String
+  po               String
+  vill             String
+  dob              DateTime
+  sex              Sex
+  category         Category
+  nationality      Nationality
+  mobileNo         String
+  AddressLine      String
+  eduqualification String
+  idProof          IdType2
+  idProofNo        String
+  houseRoomNo      String
+  squareFit        String
+  tradeLicense     String
+  bathroom         Boolean
+  signatureLink    String
+  ImageLink        String
+  verified         Boolean     @default(false)
+  createdAt        DateTime    @default(now())
+  admin            User?
+  Subscription     DateTime?
+}
+
+model Notices {
+  id      Int      @id @default(autoincrement())
+  heading String
+  body    String
+  upto    DateTime
+}
+
+model State {
+  id     Int    @id @default(autoincrement())
+  name   String
+  imgUrl String
+}
+
+model District {
+  id           Int    @id @default(autoincrement())
+  name         String
+  DistrictName String
+  imgUrl       String
+}

@@ -8,6 +8,7 @@ import {
 } from "../helper.js";
 import jwt from "jsonwebtoken";
 import { z } from "zod";
+import logger from "../logger.js";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email"),
@@ -142,7 +143,7 @@ export async function logoutfunc(req: Request, res: Response) {
 
 export async function studentLogin(req: Request, res: Response) {
   const isvalidated = StudentloginSchema.safeParse(req.body);
-
+  logger.error(isvalidated.error);
   if (!isvalidated.success) {
     res.status(400).json({ message: "failed to parse" });
     return;

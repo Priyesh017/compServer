@@ -156,7 +156,7 @@ router
 router.route("/All_Center").get(adminAuthCheckFn, ErrorHandler(All_Center));
 router.route("/subjectAdd").post(adminAuthCheckFn, ErrorHandler(subjectAdd));
 router
-  .route("/updateEnquiry")
+  .route("/updateEnquiry/:id")
   .post(adminAuthCheckFn, ErrorHandler(updateEnquiry));
 
 export default router;
