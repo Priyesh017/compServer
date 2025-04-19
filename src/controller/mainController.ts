@@ -155,10 +155,10 @@ export async function AllEnrollments(req: Request, res: Response) {
     select: {
       admitLink: true,
       certificateLink: true,
-      dob: true,
       imageLink: true,
       idCardLink: true,
       marksheetLink: true,
+      dob: true,
       name: true,
       createdAt: true,
       EnrollmentNo: true,
@@ -1034,37 +1034,39 @@ export async function Fetch_Coordinator(req: Request, res: Response) {
 export const updateEnquiry = async (req: Request, res: Response) => {
   const id = Number(req.params.id);
 
-  const updates = req.body;
+  const { editedData } = req.body;
 
   const updated = await prisma.enquiry.update({
     where: { id },
     data: {
-      name: updates.name,
-      email: updates.email,
-      father: updates.father,
-      coName: updates.coName,
-      dob: new Date(updates.dob),
-      mobileNo: updates.mobileNo,
-      AddressLine: updates.AddressLine,
-      vill: updates.vill,
-      po: updates.po,
-      ps: updates.ps,
-      pin: updates.pin,
-      state: updates.state,
-      dist: updates.dist,
-      nationality: updates.nationality,
-      sex: updates.sex,
-      category: updates.category,
-      idProof: updates.idProof,
-      idProofNo: updates.idProofNo,
-      eduqualification: updates.eduqualification,
-      bathroom: updates.bathroom,
-      tradeLicense: updates.tradeLicense,
-      squareFit: updates.squareFit,
-      houseRoomNo: updates.houseRoomNo,
+      name: editedData.name,
+      email: editedData.email,
+      father: editedData.father,
+      coName: editedData.coName,
+      dob: new Date(editedData.dob),
+      mobileNo: editedData.mobileNo,
+      AddressLine: editedData.AddressLine,
+      vill: editedData.vill,
+      po: editedData.po,
+      ps: editedData.ps,
+      pin: editedData.pin,
+      state: editedData.state,
+      dist: editedData.dist,
+      nationality: editedData.nationality,
+      sex: editedData.sex,
+      category: editedData.category,
+      idProof: editedData.idProof,
+      idProofNo: editedData.idProofNo,
+      eduqualification: editedData.eduqualification,
+      bathroom: editedData.bathroom,
+      tradeLicense: editedData.tradeLicense,
+      squareFit: editedData.squareFit,
+      houseRoomNo: editedData.houseRoomNo,
+      Subscription: new Date(editedData.Subscription),
     },
   });
 
   res.status(200).json({ message: "Update successful", updated });
 };
+
 // FIXME pic storage khacche ki na!!!!
