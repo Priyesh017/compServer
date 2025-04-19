@@ -51,6 +51,7 @@ import {
   signupFunc,
   studentLogin,
 } from "../controller/authController.js";
+import { generate_franchise } from "../controller/generetor.js";
 
 const router = Router();
 
@@ -108,6 +109,8 @@ router.route("/Certi_fetch").post(ErrorHandler(Certi_fetch));
 router.route("/noticefetch").get(ErrorHandler(noticefetch));
 
 //admin route
+
+router.route("/generate_franchise").get(ErrorHandler(generate_franchise));
 router
   .route("/FetchAllEnquiry")
   .get(adminAuthCheckFn, ErrorHandler(FetchAllEnquiry));

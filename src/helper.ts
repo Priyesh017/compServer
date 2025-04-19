@@ -6,7 +6,6 @@ import QRCode from "qrcode";
 import sharp from "sharp";
 import axios from "axios";
 import path from "path";
-
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import crypto from "crypto";
 import { s3 } from "./index.js";
@@ -193,6 +192,104 @@ function getRandomDate(year: number) {
   return new Date(randomTime).toLocaleDateString();
 }
 
+export async function fill_franchise() {
+  const studentData = {
+    Name: "mainak",
+    EnrollmentNo: "mainak",
+    CourseName: "CName",
+    Centername: "s",
+    totalMarks: "m",
+  };
+
+  const qrText = JSON.stringify(studentData);
+  const qrCodeBuffer = await QRCode.toBuffer(qrText);
+
+  const existingPdfBytes = fs.readFileSync("files/franchise.pdf");
+  const pdfDoc = await PDFDocument.load(existingPdfBytes);
+
+  const qrImage = await pdfDoc.embedPng(qrCodeBuffer);
+  const { width, height } = qrImage.scale(0.3);
+
+  const page = pdfDoc.getPages()[0];
+  if (typeof page == "undefined") return;
+
+  const pdfHeight = page.getHeight();
+
+  page.drawImage(qrImage, {
+    x: 50,
+    y: pdfHeight - 220,
+    width,
+    height,
+  });
+
+  page.drawText("father", {
+    x: 248,
+    y: pdfHeight - 291,
+    size: 18,
+    color: rgb(0, 0, 0),
+  });
+  page.drawText("CName", {
+    x: 232,
+    y: pdfHeight - 341,
+    size: 15,
+    color: rgb(0, 0, 0),
+  });
+
+  page.drawText("completed", {
+    x: 151,
+    y: pdfHeight - 351,
+    size: 18,
+    color: rgb(0, 0, 0),
+  });
+  page.drawText("5years", {
+    x: 150,
+    y: pdfHeight - 378,
+    size: 15,
+    color: rgb(0, 0, 0),
+  });
+
+  page.drawText("2002", {
+    x: 456,
+    y: pdfHeight - 380,
+    size: 18,
+    color: rgb(0, 0, 0),
+  });
+  page.drawText("CName", {
+    x: 157,
+    y: pdfHeight - 406,
+    size: 15,
+    color: rgb(0, 0, 0),
+  });
+
+  page.drawText("father", {
+    x: 485,
+    y: pdfHeight - 406,
+    size: 18,
+    color: rgb(0, 0, 0),
+  });
+  page.drawText("CName", {
+    x: 179,
+    y: pdfHeight - 436,
+    size: 15,
+    color: rgb(0, 0, 0),
+  });
+  page.drawText("father", {
+    x: 223,
+    y: pdfHeight - 458,
+    size: 18,
+    color: rgb(0, 0, 0),
+  });
+
+  page.drawText("CName", {
+    x: 232,
+    y: pdfHeight - 350,
+    size: 15,
+    color: rgb(0, 0, 0),
+  });
+  const pdfBytes = await pdfDoc.save();
+
+  fs.writeFileSync("filled_franchise.pdf", pdfBytes);
+}
 export async function fillCertificate({
   grade,
   totalMarks,
